@@ -17,17 +17,36 @@ import java.util.logging.Logger;
 public class MockPaillierContext extends PaillierContext {
 
   private static Logger logger = Logger.getLogger("com.n1analytics.paillier");
-  
+
+  /**
+   * Constructs a new mock Paillier context.
+   *
+   * @param publicKey associated with this MockPaillierContext.
+   * @param signed to denote whether this MockPaillierContext supports signed or unsigned numbers.
+   * @param precision to denote the number of bits used to represent valid numbers.
+   */
   public MockPaillierContext(PaillierPublicKey publicKey, boolean signed, int precision) {
     super(publicKey, signed, precision);
     logger.warning("You are using the MockPaillierContext. Are you sure? This is NOT secure/private!");
   }
 
+  /**
+   * Performs "mock" obfuscation for an {@code EncryptedNumber}.
+   *
+   * @param encrypted the {@code EncryptedNumber} to be obfuscated.
+   * @return the "mock" obfuscation result.
+   */
   public EncryptedNumber obfuscate(EncryptedNumber encrypted) {
     //we skip this
     return encrypted;
   }
-  
+
+  /**
+   * Performs "mock" encryption for an {@code EncryptedNumber}.
+   *
+   * @param encoded the {@code EncodedNumber} to be encrypted.
+   * @return the "mock" encryption result.
+   */
   public EncryptedNumber encrypt(EncodedNumber encoded) {
     //we don't actually encrypt. 
     checkSameContext(encoded);
@@ -35,7 +54,16 @@ public class MockPaillierContext extends PaillierContext {
     final BigInteger value = encoded.getValue();
     return new EncryptedNumber(this, value.mod(modulus), encoded.getExponent());
   }
-  
+
+  /**
+   * Performs "mock" addition between two {@code EncryptedNumber}s.
+   *
+   * @param operand1 first {@code EncryptedNumber}.
+   * @param operand2 second {@code EncryptedNumber}.
+   * @return the "mock" addition result.
+   * @throws PaillierContextMismatchException if {@code operand1}'s mock context is not the same as
+   * {@code operand2}'s mock context.
+   */
   public EncryptedNumber add(EncryptedNumber operand1, EncryptedNumber operand2)
       throws PaillierContextMismatchException {
     checkSameContext(operand1);
@@ -46,10 +74,12 @@ public class MockPaillierContext extends PaillierContext {
     int exponent1 = operand1.getExponent();
     int exponent2 = operand2.getExponent();
     if (exponent1 > exponent2) {
-      value1 = value1.multiply(BigInteger.ONE.shiftLeft(exponent1 - exponent2)).mod(modulus);
+//      value1 = value1.multiply(BigInteger.ONE.shiftLeft(exponent1 - exponent2)).mod(modulus);
+      value1 = value1.multiply(getRescalingFactor(exponent1 - exponent2));
       exponent1 = exponent2;
     } else if (exponent1 < exponent2) {
-      value2 = value2.multiply(BigInteger.ONE.shiftLeft(exponent2 - exponent1)).mod(modulus);
+//      value2 = value2.multiply(BigInteger.ONE.shiftLeft(exponent2 - exponent1)).mod(modulus);
+      value2 = value2.multiply(getRescalingFactor(exponent2 - exponent1));
       exponent2 = exponent1;
     } // else do nothing
     BigInteger result = value1.add(value2);
@@ -62,7 +92,14 @@ public class MockPaillierContext extends PaillierContext {
     }
     return new EncryptedNumber(this, result.mod(modulus), exponent1);
   }
-  
+
+  /**
+   * Performs "mock" additive inverse for {@code EncryptedNumber}.
+   *
+   * @param operand1 input.
+   * @return the "mock" additive inverse.
+   * @throws PaillierContextMismatchException if {@code operand1}'s mock context is not the same as this mock context.
+   */
   public EncryptedNumber additiveInverse(EncryptedNumber operand1) throws PaillierContextMismatchException {
     checkSameContext(operand1);
     return new EncryptedNumber(operand1.getContext(),
@@ -70,6 +107,13 @@ public class MockPaillierContext extends PaillierContext {
         operand1.getExponent());
   }
 
+  /**
+   * Performs "mock" additive inverse for {@code EncodedNumber}
+   *
+   * @param operand1 input.
+   * @return the "mock" additive inverse.
+   * @throws PaillierContextMismatchException if {@code operand1}'s mock context is not the same as this mock context.
+   */
   public EncodedNumber additiveInverse(EncodedNumber operand1) throws PaillierContextMismatchException {
     checkSameContext(operand1);
     if (operand1.getValue().signum() == 0) {
@@ -80,7 +124,16 @@ public class MockPaillierContext extends PaillierContext {
     final BigInteger result = modulus.subtract(value1);
     return new EncodedNumber(this, result, operand1.getExponent());
   }
-  
+
+  /**
+   * Performs "mock" multiplication between an {@code EncryptedNumber} and an {@code EncodedNumber}.
+   *
+   * @param operand1 an {@code EncryptedNumber}.
+   * @param operand2 an {@code EncodedNumber}.
+   * @return the "mock" multiplication result.
+   * @throws PaillierContextMismatchException if {@code operand1}'s mock context is not the same as
+   * {@code operand2}'s mock context.
+   */
   public EncryptedNumber multiply(EncryptedNumber operand1, EncodedNumber operand2)
       throws PaillierContextMismatchException {
     checkSameContext(operand1);

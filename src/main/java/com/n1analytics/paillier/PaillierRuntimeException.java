@@ -13,26 +13,56 @@
  */
 package com.n1analytics.paillier;
 
+/**
+ * {@code PaillierRuntimeException} is the super class of the runtime exception in Javallier.
+ */
 public class PaillierRuntimeException extends RuntimeException {
 
   private static final long serialVersionUID = 6030736579421587829L;
 
+  /**
+   * Constructs a new {@code PaillierRuntimeException} without a specific message.
+   */
   public PaillierRuntimeException() {
     super();
   }
 
+  /**
+   * Constructs a new {@code PaillierRuntimeException} with a specific message.
+   *
+   * @param message the detail message.
+   */
   public PaillierRuntimeException(String message) {
     super(message);
   }
 
+  /**
+   * Constructs a new {@code PaillierRuntimeException} with the exception cause.
+   *
+   * @param cause the cause.
+   */
   public PaillierRuntimeException(Throwable cause) {
     super(cause);
   }
 
+  /**
+   * Constructs a new {@code PaillierRuntimeException} with a specific message and the exception cause.
+   *
+   * @param message the detail message,
+   * @param cause the cause.
+   */
   public PaillierRuntimeException(String message, Throwable cause) {
     super(message, cause);
   }
 
+  /**
+   * Constructs a new {@code PaillierRuntimeException} with a specific message and the exception cause.
+   *
+   * @param message the detail message.
+   * @param cause the cause.
+   * @param enableSuppression whether suppression is enabled or disabled.
+   * @param writableStackTrace whether the stack trace should be writable.
+   */
   protected PaillierRuntimeException(String message, Throwable cause,
                                      boolean enableSuppression,
                                      boolean writableStackTrace) {

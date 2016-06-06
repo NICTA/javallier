@@ -13,26 +13,52 @@
  */
 package com.n1analytics.paillier;
 
+/**
+ * Thrown when comparing two Paillier contexts and the contexts are not the same.
+ */
 public class PaillierContextMismatchException extends PaillierKeyMismatchException {
 
   private static final long serialVersionUID = -6169034734530199098L;
 
+  /**
+   * Constructs a new {@code PaillierContextMismatchException} without a specific message.
+   */
   public PaillierContextMismatchException() {
     super();
   }
 
+  /**
+   * Constructs a new {@code PaillierContextMismatchException} with a specific message.
+   * @param message the detail message.
+   */
   public PaillierContextMismatchException(String message) {
     super(message);
   }
 
+  /**
+   * Constructs a new {@code PaillierContextMismatchException} with the exception cause.
+   * @param cause the cause.
+   */
   public PaillierContextMismatchException(Throwable cause) {
     super(cause);
   }
 
+  /**
+   * Constructs a new {@code PaillierContextMismatchException} with a specific message and the exception cause.
+   * @param message the detail message,
+   * @param cause the cause.
+   */
   public PaillierContextMismatchException(String message, Throwable cause) {
     super(message, cause);
   }
 
+  /**
+   * Constructs a new {@code PaillierContextMismatchException} with a specific message and the exception cause.
+   * @param message the detail message.
+   * @param cause the cause.
+   * @param enableSuppression whether suppression is enabled or disabled.
+   * @param writableStackTrace whether the stack trace should be writable.
+   */
   public PaillierContextMismatchException(String message, Throwable cause,
                                           boolean enableSuppression,
                                           boolean writableStackTrace) {

@@ -13,26 +13,53 @@
  */
 package com.n1analytics.paillier;
 
+/**
+ * Thrown when a Paillier keypair used during encryption process is different to
+ * the keypair used in the decryption process.
+ */
 public class PaillierKeyMismatchException extends PaillierRuntimeException {
 
   private static final long serialVersionUID = -1454035978739577475L;
 
+  /**
+   * Construct a new {@code PaillierKeyMismatchException} without a specific message.
+   */
   public PaillierKeyMismatchException() {
     super();
   }
 
+  /**
+   * Construct a new {@code PaillierKeyMismatchException} with a specific message.
+   * @param message the detail message.
+   */
   public PaillierKeyMismatchException(String message) {
     super(message);
   }
 
+  /**
+   * Construct a new {@code PaillierKeyMismatchException} with the exception cause.
+   * @param cause the cause.
+   */
   public PaillierKeyMismatchException(Throwable cause) {
     super(cause);
   }
 
+  /**
+   * Construct a new {@code PaillierKeyMismatchException} with a specific message and the exception cause.
+   * @param message the detail message,
+   * @param cause the cause.
+   */
   public PaillierKeyMismatchException(String message, Throwable cause) {
     super(message, cause);
   }
 
+  /**
+   * Construct a new {@code PaillierKeyMismatchException} with a specific message and the exception cause.
+   * @param message the detail message.
+   * @param cause the cause.
+   * @param enableSuppression whether suppression is enabled or disabled.
+   * @param writableStackTrace whether the stack trace should be writable.
+   */
   public PaillierKeyMismatchException(String message, Throwable cause,
                                       boolean enableSuppression,
                                       boolean writableStackTrace) {

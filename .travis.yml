@@ -7,6 +7,7 @@ scala:
 
 jdk:
 - openjdk7
+- oraclejdk7
 - oraclejdk8
 
 # These directories are cached to S3 at the end of the build
@@ -15,7 +16,9 @@ cache:
     - $HOME/.ivy2/cache
     - $HOME/.sbt/boot/
 
-script: sbt test
+script:
+    - sbt test
+    - sbt 'project benchmark' 'jmh:run -i 3 -wi 3 -f1 -t1'
 
 notifications:
   slack:

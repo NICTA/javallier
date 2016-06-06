@@ -15,7 +15,7 @@ public class RawPaillierTest {
   
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
-    privateKey = PaillierPrivateKey.create(1024);
+    privateKey = PaillierPrivateKey.create(2048);
     publicKey = privateKey.getPublicKey();
   }
   

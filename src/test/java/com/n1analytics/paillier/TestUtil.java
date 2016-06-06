@@ -13,9 +13,14 @@
  */
 package com.n1analytics.paillier;
 
+import com.n1analytics.paillier.util.BigIntegerUtil;
+
+import java.math.BigInteger;
 import java.util.Random;
 
 public class TestUtil {
+
+  public static final double EPSILON = 1e-3;
 
   public static final Random random = new Random();
 
@@ -53,5 +58,12 @@ public class TestUtil {
 
   public static double randomSubnormalDouble() {
     return Double.longBitsToDouble(0x800FFFFFFFFFFFFL & random.nextLong());
+  }
+
+  public static boolean isValid(PaillierContext context, BigInteger number) {
+    if (BigIntegerUtil.greater(number, context.getMaxSignificand()) ||
+            BigIntegerUtil.less(number, context.getMinSignificand()))
+      return false;
+    return true;
   }
 }

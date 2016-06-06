@@ -19,7 +19,7 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 
 /**
- * Immutable class representing Paillier private key.
+ * An immutable class representing Paillier private key.
  *
  * A private key (and it's corresponding public key) are generated via the
  * following procedure, given a public key length <code>modulusLength</code>:
@@ -90,22 +90,60 @@ import java.security.SecureRandom;
  */
 public final class PaillierPrivateKey {
 
-  static interface Serializer {
-
+  /**
+   * A serializer interface for {@code PaillierPrivateKey}.
+   */
+  public static interface Serializer {
     void serialize(PaillierPublicKey publickey, BigInteger p, BigInteger q);
   }
 
+  /**
+   * The corresponding public key.
+   */
   protected final PaillierPublicKey publicKey;
-  protected final BigInteger p; //p and q are the two primes such that 
-  protected final BigInteger q; //p*q = publicKey.modulus
-  protected final BigInteger pSquared;
-  protected final BigInteger qSquared;
-  protected final BigInteger pInverse; //modular inverse of p modulo q
-  protected final BigInteger hp; //precomputed hp and hq as defined in Paillier's
-  protected final BigInteger hq; //paper page 12: Decryption using Chinese-remaindering
-  
 
-  protected PaillierPrivateKey(PaillierPublicKey publicKey, BigInteger totient) {
+  /**
+   * The first prime number, {@code p} such that {@code p*q = publicKey.modulus}.
+   */
+  protected final BigInteger p;
+
+  /**
+   * The first prime number, {@code q} such that  {@code p*q = publicKey.modulus}.
+   */
+  protected final BigInteger q;
+
+  /**
+   * The value <code>p<sup>2</sup></code>
+   */
+  protected final BigInteger pSquared;
+
+  /**
+   * The value <code>q<sup>2</sup></code>
+   */
+  protected final BigInteger qSquared;
+
+  /**
+   * The modular inverse of <code>p modulo q</code>
+   */
+  protected final BigInteger pInverse;
+
+  /**
+   * Precomputed <code>hp</code> as defined in Paillier's paper page 12: Decryption using Chinese-remaindering.
+   */
+  protected final BigInteger hp;
+
+  /**
+   * Precomputed <code>hq</code> as defined in Paillier's paper page 12: Decryption using Chinese-remaindering.
+   */
+  protected final BigInteger hq;
+
+  /**
+   * Constructs a Paillier private key given the associated public key and the totient.
+   *
+   * @param publicKey associated with this private key.
+   * @param totient of the private key.
+   */
+  public PaillierPrivateKey(PaillierPublicKey publicKey, BigInteger totient) {
     // Some basic error checking. Note though that passing these tests does
     // not guarantee that the private key is valid.
     if (publicKey == null) {
@@ -142,12 +180,9 @@ public final class PaillierPrivateKey {
    * Constructs a Paillier private key given an associated public key and the
    * two prime numbers p and q of the factorization of the public key's modulus.
    * 
-   * @param publicKey
-   *          Public key associated with this private key.
-   * @param p
-   *          prime p.
-   * @param q
-   *          prime q.
+   * @param publicKey associated with this private key.
+   * @param p prime p.
+   * @param q prime q.
    */
   protected PaillierPrivateKey(PaillierPublicKey publicKey, BigInteger p,
       BigInteger q) {
@@ -170,10 +205,10 @@ public final class PaillierPrivateKey {
 
   /**
    * Creates a Paillier keypair of the specified modulus key length.
-   * @param modulusLength the length of the public key modulus. Must be a
-   * positive multiple of 8.
-   * @return private key with the associated public key (keypair).
-   * @throws IllegalArgumentException on illegal <code>modulusLength</code>
+   *
+   * @param modulusLength the length of the public key modulus. Must be a positive multiple of 8.
+   * @return a Paillier keypair consists of a private key and the corresponding public key.
+   * @throws IllegalArgumentException on illegal {@code modulusLength}.
    */
   public static PaillierPrivateKey create(int modulusLength) {
     if (modulusLength < 8 || modulusLength % 8 != 0) {
@@ -198,7 +233,6 @@ public final class PaillierPrivateKey {
   }
 
   /**
-   * Gets the public key associated with this private key.
    * @return the associated public key.
    */
   public PaillierPublicKey getPublicKey() {
@@ -206,10 +240,11 @@ public final class PaillierPrivateKey {
   }
 
   /**
-   * Returns a decrypted encrypted number (which is still encoded).
-   * @param encrypted number to be decrypted.
-   * @return the decrypted encoded number.
-   * @throws PaillierKeyMismatchException If the encrypted number was not
+   * Decrypts an encrypted number.
+   *
+   * @param encrypted EncryptedNumber to be decrypted.
+   * @return the decryption result.
+   * @throws PaillierKeyMismatchException if the encrypted number was not
    * encoded with the appropriate public key.
    */
   public EncodedNumber decrypt(EncryptedNumber encrypted)
@@ -228,16 +263,13 @@ public final class PaillierPrivateKey {
   /**
    * Implementation of the decryption function of the Paillier encryption scheme.
    * Returns the plain text of a given cipher text.
+   *
    * @param ciphertext to be decrypted.
    * @return the decrypted plaintext.
    */
   public BigInteger raw_decrypt(BigInteger ciphertext){
-    BigInteger decryptedToP = lFunction(
-        ciphertext.modPow(p.subtract(BigInteger.ONE), pSquared), p)
-        .multiply(hp).mod(p);
-    BigInteger decryptedToQ = lFunction(
-        ciphertext.modPow(q.subtract(BigInteger.ONE), qSquared), q)
-        .multiply(hq).mod(q);
+    BigInteger decryptedToP = lFunction(BigIntegerUtil.modPow(ciphertext, p.subtract(BigInteger.ONE), pSquared),p).multiply(hp).mod(p);
+    BigInteger decryptedToQ = lFunction(BigIntegerUtil.modPow(ciphertext, q.subtract(BigInteger.ONE), qSquared),q).multiply(hq).mod(q);
     return crt(decryptedToP, decryptedToQ);
   }
 
@@ -254,25 +286,26 @@ public final class PaillierPrivateKey {
    * using Chinese-remaindering'.
    */
   private BigInteger hFunction(BigInteger x, BigInteger xSquared) {
-    return lFunction(
-        publicKey.generator.modPow(x.subtract(BigInteger.ONE), xSquared), x)
-        .modInverse(x);
+    return lFunction(BigIntegerUtil.modPow(publicKey.generator, x.subtract(BigInteger.ONE), xSquared),x).modInverse(x);
   }
 
   /**
    * The Chinese Remainder Theorem as needed for decryption.
-   * 
-   * @param mp
-   *          the solution modulo p
-   * @param mq
-   *          the solution modulo q
-   * @return the solution modulo n=pq
+   *
+   * @param mp the solution modulo p.
+   * @param mq the solution modulo q.
+   * @return the solution modulo n=pq.
    */
   private BigInteger crt(BigInteger mp, BigInteger mq) {
     BigInteger u = mq.subtract(mp).multiply(pInverse).mod(q);
     return mp.add(u.multiply(p));
   }
 
+  /**
+   * Serializes the {@code PaillierPrivateKey}.
+   *
+   * @param serializer to serialize the {@code PaillierPrivateKey}.
+   */
   public void serialize(Serializer serializer) {
     serializer.serialize(publicKey, p, q);
   }

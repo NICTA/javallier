@@ -18,7 +18,6 @@ import org.junit.Test;
 
 import java.math.BigInteger;
 
-import static com.n1analytics.paillier.TestConfiguration.CONFIGURATION_DOUBLE;
 import static org.junit.Assert.*;
 
 public class PaillierPublicKeyTest {
@@ -28,7 +27,7 @@ public class PaillierPublicKeyTest {
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
-    defPrivateKey = PaillierPrivateKey.create(1024);
+    defPrivateKey = PaillierPrivateKey.create(2048);
     defPublicKey = defPrivateKey.getPublicKey();
   }
 
@@ -75,12 +74,12 @@ public class PaillierPublicKeyTest {
 
   @Test
   public void testCreateSignedPartialContext() throws Exception {
-    PaillierContext context = defPublicKey.createSignedContext(1022);
+    PaillierContext context = defPublicKey.createSignedContext(2044);
     assertNotNull(context);
     assertEquals(true, context.isSigned());
     assertEquals(false, context.isFullPrecision());
 
-    context = defPublicKey.createSignedContext(1024);
+    context = defPublicKey.createSignedContext(2048);
     assertNotNull(context);
     assertEquals(true, context.isSigned());
     assertEquals(true, context.isFullPrecision());
@@ -88,59 +87,59 @@ public class PaillierPublicKeyTest {
 
   @Test
   public void testCreateUnsignedPartialContext() throws Exception {
-    PaillierContext context = defPublicKey.createUnsignedContext(1022);
+    PaillierContext context = defPublicKey.createUnsignedContext(2044);
     assertNotNull(context);
     assertEquals(false, context.isSigned());
     assertEquals(false, context.isFullPrecision());
 
-    context = defPublicKey.createUnsignedContext(1024);
+    context = defPublicKey.createUnsignedContext(2048);
     assertNotNull(context);
     assertEquals(false, context.isSigned());
     assertEquals(true, context.isFullPrecision());
   }
 
-  @Test
-  public void testCreateDoubleContext() {
-    PaillierContext context = CONFIGURATION_DOUBLE.context();
-
-    // Test that the extreme floating point values are encodable
-    PaillierContextTest.testEncodable(context, Double.MAX_VALUE);
-    PaillierContextTest.testEncodable(context, Double.MIN_VALUE);
-    PaillierContextTest.testEncodable(context, -Double.MAX_VALUE);
-    PaillierContextTest.testEncodable(context, -Double.MIN_VALUE);
-
-    // Test that the extreme floating point values (with extended precision)
-    // are encodable
-    final Number MAX_NUMBER = new Number(
-            BigInteger.ONE.shiftLeft(Number.DOUBLE_MAX_PRECISION).subtract(
-                    BigInteger.ONE), Number.DOUBLE_MIN_VALUE_EXPONENT);
-    PaillierContextTest.testEncodable(context, MAX_NUMBER);
-    PaillierContextTest.testEncodable(context, MAX_NUMBER.negate());
-
-    // Test that the number after MAX_NUMBER is not encodable
-    final Number INVALID_NUMBER = new Number(
-            BigInteger.ONE.shiftLeft(Number.DOUBLE_MAX_PRECISION),
-            Number.DOUBLE_MIN_VALUE_EXPONENT);
-    PaillierContextTest.testUnencodable(context, INVALID_NUMBER);
-    PaillierContextTest.testUnencodable(context, INVALID_NUMBER.negate());
-  }
+//  @Test
+//  public void testCreateDoubleContext() {
+//    PaillierContext context = CONFIGURATION_DOUBLE.context();
+//
+//    // Test that the extreme floating point values are encodable
+//    PaillierContextTest.testEncodable(context, Double.MAX_VALUE);
+//    PaillierContextTest.testEncodable(context, Double.MIN_VALUE);
+//    PaillierContextTest.testEncodable(context, -Double.MAX_VALUE);
+//    PaillierContextTest.testEncodable(context, -Double.MIN_VALUE);
+//
+//    // Test that the extreme floating point values (with extended precision)
+//    // are encodable
+//    final Number MAX_NUMBER = new Number(
+//            BigInteger.ONE.shiftLeft(Number.DOUBLE_MAX_PRECISION).subtract(
+//                    BigInteger.ONE), Number.DOUBLE_MIN_VALUE_EXPONENT);
+//    PaillierContextTest.testEncodable(context, MAX_NUMBER);
+//    PaillierContextTest.testEncodable(context, MAX_NUMBER.negate());
+//
+//    // Test that the number after MAX_NUMBER is not encodable
+//    final Number INVALID_NUMBER = new Number(
+//            BigInteger.ONE.shiftLeft(Number.DOUBLE_MAX_PRECISION),
+//            Number.DOUBLE_MIN_VALUE_EXPONENT);
+//    PaillierContextTest.testUnencodable(context, INVALID_NUMBER);
+//    PaillierContextTest.testUnencodable(context, INVALID_NUMBER.negate());
+//  }
 
   @Test
   public void testEquals() throws Exception {
-    assertTrue(defPublicKey.equals(defPublicKey));
-    assertFalse(defPublicKey.equals(defPrivateKey));
+    assertTrue(defPublicKey.equals(defPublicKey)); // Compare to itself
+    assertFalse(defPublicKey.equals(defPrivateKey)); // Compare to other object
+    assertFalse(defPublicKey.equals(null)); // Compare to null
 
     PaillierPublicKey otherPublicKey = null;
-
-    // Check when the other public key hasn't been initialised (ie, is null)
-    assertFalse(defPublicKey.equals(otherPublicKey));
+    assertFalse(defPublicKey.equals(otherPublicKey)); // Compare to an uninitialised public key
 
     BigInteger modulus = new BigInteger("17").multiply(new BigInteger("19"));
     otherPublicKey = new PaillierPublicKey(modulus);
+    assertFalse(defPublicKey.equals(otherPublicKey)); // Compare to another public key with the same modulus
 
-    // Check after the other private key has been initialised (ie, is not null)
-    assertFalse(defPublicKey.equals(otherPublicKey));
+    BigInteger differentModulus = new BigInteger("19").multiply(new BigInteger("23"));
+    otherPublicKey = new PaillierPublicKey(differentModulus);
+    assertFalse(defPublicKey.equals(otherPublicKey)); // Compare to another public key with different modulus
 
-    assertFalse(defPublicKey.equals(null));
   }
 }

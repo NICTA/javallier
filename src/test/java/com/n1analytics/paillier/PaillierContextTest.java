@@ -21,14 +21,14 @@ import static org.junit.Assert.*;
 
 public class PaillierContextTest {
 
-  private final static PaillierContext signedFull = TestConfiguration.SIGNED_FULL_PRECISION_1024.context();
-  private final static PaillierContext unsignedFull = TestConfiguration.UNSIGNED_FULL_PRECISION_1024.context();
-  private final static PaillierContext signedPartial = TestConfiguration.SIGNED_PARTIAL_PRECISION_1024.context();
-  private final static PaillierContext unsignedPartial = TestConfiguration.UNSIGNED_PARTIAL_PRECISION_1024.context();
+  private final static PaillierContext signedFull = TestConfiguration.SIGNED_FULL_PRECISION.context();
+  private final static PaillierContext unsignedFull = TestConfiguration.UNSIGNED_FULL_PRECISION.context();
+  private final static PaillierContext signedPartial = TestConfiguration.SIGNED_PARTIAL_PRECISION.context();
+  private final static PaillierContext unsignedPartial = TestConfiguration.UNSIGNED_PARTIAL_PRECISION.context();
 
   @Test
   public void testConstructor() throws Exception {
-    PaillierPublicKey publicKey = TestConfiguration.SIGNED_FULL_PRECISION_1024.publicKey();
+    PaillierPublicKey publicKey = TestConfiguration.SIGNED_FULL_PRECISION.publicKey();
     PaillierContext context = null;
 
     try {
@@ -53,7 +53,7 @@ public class PaillierContextTest {
     assertNull(context);
 
     try {
-      context = new PaillierContext(publicKey, true, 1032);
+      context = new PaillierContext(publicKey, true, 2050);
       fail("Successfully created a context with precision greater than the public key's modulus bit length");
     } catch (IllegalArgumentException e) {
     }
@@ -69,6 +69,25 @@ public class PaillierContextTest {
     // Check precision
     assertNotNull(context.getPrecision());
     assertEquals(1024, context.getPrecision());
+
+    PaillierContext contextWithDiffBase = new PaillierContext(publicKey, true, 1024, 17);
+    assertNotNull(contextWithDiffBase);
+    assertNotNull(contextWithDiffBase);
+    // Check public key
+    assertNotNull(contextWithDiffBase.getPublicKey());
+    assertEquals(publicKey, contextWithDiffBase.getPublicKey());
+    // Check signed
+    assertTrue(contextWithDiffBase.isSigned());
+    // Check precision
+    assertNotNull(contextWithDiffBase.getPrecision());
+    assertEquals(1024, contextWithDiffBase.getPrecision());
+
+    contextWithDiffBase = null;
+    try {
+      contextWithDiffBase = new PaillierContext(publicKey, true, 1024, 1);
+      fail("Successfully creating a new PaillierContext with invalid base");
+    } catch (IllegalArgumentException e) {
+    }
   }
 
   @Test
@@ -104,17 +123,13 @@ public class PaillierContextTest {
 
   @Test
   public void testEncodeDecode() throws Exception {
-    EncodedNumber encodedNumber = signedFull.encode(10.0);
+    EncodedNumber encodedNumber = signedFull.encode(10);
 
     assertEquals(10, signedFull.decodeLong(encodedNumber));
-    assertEquals(10, signedFull.decodeApproximateLong(encodedNumber));
 
     assertEquals(new BigInteger("10"), signedFull.decodeBigInteger(encodedNumber));
-    assertEquals(new BigInteger("10"),
-                 signedFull.decodeApproximateBigInteger(encodedNumber));
 
     assertEquals(10.0, signedFull.decodeDouble(encodedNumber), 0.0);
-    assertEquals(10.0, signedFull.decodeApproximateDouble(encodedNumber), 0.0);
   }
 
   @Test
@@ -123,7 +138,7 @@ public class PaillierContextTest {
 
     // Raise Exception because the two contexts have different public key
     try {
-      context.checkSameContext(TestConfiguration.SIGNED_FULL_PRECISION_512.context());
+      context.checkSameContext(TestConfiguration.UNSIGNED_FULL_PRECISION.context());
     } catch (PaillierContextMismatchException e) {
     }
 
@@ -151,23 +166,6 @@ public class PaillierContextTest {
   }
 
   @Test
-  public void testIsLongValid() throws Exception {
-    assertTrue(signedFull.isValid(17));
-  }
-
-  @Test
-  public void testIsDoubleValid() throws Exception {
-    assertTrue(signedFull.isValid(17.1));
-
-    assertFalse(signedFull.isValid(Double.POSITIVE_INFINITY));
-  }
-
-  @Test
-  public void testIsBigIntegerValid() throws Exception {
-    assertTrue(signedFull.isValid(new BigInteger("17")));
-  }
-
-  @Test
   public void testIsEncodedNumberValid() throws Exception {
     // Valid EncodedNumbers
     assertTrue(signedFull.isValid(
@@ -185,54 +183,39 @@ public class PaillierContextTest {
                                                                   BigInteger.ONE), 0)));
   }
 
-  // NOTE: the other getMax() and getMin() methods are tested in PaillierEncodedNumberTest
-  @Test
-  public void testGetMaxLong() throws Exception {
-    PaillierPrivateKey privateKey = PaillierPrivateKey.create(32);
-    PaillierPublicKey publicKey = privateKey.getPublicKey();
-    PaillierContext context = publicKey.createUnsignedContext();
-
-    // Note: the context is created such that the max long value is within the range of long
-    assertEquals(context.getMaxLong(0),
-                 publicKey.getModulus().subtract(BigInteger.ONE).longValue());
-  }
-
   @Test
   public void testEquals() throws Exception {
-    assertTrue(signedFull.equals(signedFull));
-    assertFalse(signedFull.equals(signedFull.getPublicKey()));
+    assertTrue(signedFull.equals(signedFull)); // Compare to itself
+    assertFalse(signedFull.equals(signedFull.getPublicKey())); // Compare to other object
+    assertFalse(signedFull.equals(null)); // Compare to null
 
     PaillierContext otherContext = null;
+    assertFalse(signedFull.equals(otherContext)); // Compare to an uninitialised Paillier context
 
-    // Check when the other public key hasn't been initialised (ie, is null)
-    assertFalse(signedFull.equals(otherContext));
+    otherContext = new PaillierContext(TestConfiguration.createSignedFullPrecision(1024).publicKey(), true, 1024);
+    assertFalse(signedFull.equals(otherContext)); // Compare to a Paillier context with different public key
 
-    otherContext = new PaillierContext(unsignedFull.getPublicKey(), false, 1024);
+    otherContext = new PaillierContext(signedFull.getPublicKey(), false, 1024);
+    assertFalse(signedFull.equals(otherContext)); // Compare to a Paillier context with different signedness
 
-    // Check after the other private key has been initialised (ie, is not null)
-    assertFalse(signedFull.equals(otherContext));
-
-    assertFalse(signedFull.equals(null));
-
+    otherContext = new PaillierContext(signedFull.getPublicKey(), true, 1000);
+    assertFalse(signedFull.equals(otherContext)); // Compare to a Paillier context with different precision
   }
 
-  public static void testEncodable(PaillierContext context, Number number) {
+  public static void testEncodable(PaillierContext context, EncodedNumber number) {
     assertTrue(context.isValid(number));
-    assertEquals(number, context.decode(context.encode(number)));
+//    assertEquals(number, context.decode(context.encode(number)));
   }
 
   public static void testEncodable(PaillierContext context, double number) {
-    assertTrue(context.isValid(number));
-    assertEquals(number, context.decode(context.encode(number)).decodeDouble(), 0.0);
+    assertEquals(number, context.decodeDouble(context.encode(number)), 0.0);
   }
 
   public static void testEncodable(PaillierContext context, long number) {
-    assertTrue(context.isValid(number));
-    assertEquals(number, context.decode(context.encode(number)).decodeLong());
+    assertEquals(number, context.decodeLong(context.encode(number)));
   }
 
-  public static void testUnencodable(PaillierContext context, Number number) {
-    assertFalse(context.isValid(number));
+  public static void testUnencodable(PaillierContext context, BigInteger number) {
     try {
       context.encode(number);
       fail("Should not be able to encode number");
@@ -241,7 +224,6 @@ public class PaillierContextTest {
   }
 
   public static void testUnencodable(PaillierContext context, double number) {
-    assertFalse(context.isValid(number));
     try {
       context.encode(number);
       fail("Should not be able to encode number");
@@ -250,12 +232,10 @@ public class PaillierContextTest {
   }
 
   public static void testUnencodable(PaillierContext context, long number) {
-    assertFalse(context.isValid(number));
     try {
       context.encode(number);
       fail("Should not be able to encode number");
     } catch (EncodeException e) {
     }
   }
-
 }

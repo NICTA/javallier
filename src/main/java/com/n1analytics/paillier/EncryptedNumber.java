@@ -18,96 +18,67 @@ import com.n1analytics.paillier.util.HashChain;
 import java.math.BigInteger;
 
 /**
- * Immutable class representing encrypted number and arithmetic operations that can be computed on the encrypted number.
- *
- * The attributes stored in this class are:
+ * A class representing encrypted number. The attributes of this class are:
  * <ul>
- *     <li> public key: the Paillier public key use to encrypt this EncryptedNumber </li>
- *     <li> ciphertext: the encrypted representation of the EncodedNumber </li>
- *     <li> exponent: the exponent of the encrypted EncodedNumber </li>
- *     <li> isObfuscated: indicates whether this EncryptedNumber has been obfuscated with a random number </li>
+ *     <li>A PaillierContext <code>context</code> associated to this encrypted number.</li>
+ *     <li>A BigInteger <code>ciphertext</code>.</li>
+ *     <li>An integer <code>exponent</code> of the encrypted number.</li>
+ *     <li>A boolean <code>isSafe</code> that denotes whether the encrypted number has been obfuscated.</li>
  * </ul>
  *
- * This class provides a method to obfuscate this EncryptedNumber with a random number. It also contains a number of
- * arithmetic operations that can be computed between this EncryptedNumber and other EncryptedNumber or
- * a non-encrypted number (EncodedNumber, double, long or BigInteger). The supported arithmetic operations are:
- * <ul>
- *     <li> Addition of two encrypted numbers </li>
- *     <li> Addition of an encrypted number with a non-encrypted number </li>
- *     <li> Multiplication of an encrypted number with a non-encrypted number </li>
- *     <li> Subtraction of an encrypted number from another encrypted number </li>
- *     <li> Subtraction of an non-encrypted number from an encrypted number </li>
- *     <li> Division of an encrypted number by a double/long </li>
- * </ul>
- * The arithmetic operations can only be performed when both operands have the same exponent, as a result this class
- * also provides a method to decrase the exponent of the operand with the higher exponent.
- *
- * Examples:
+ * This class defines the methods:
  * <ul>
  *     <li>
- *         To obfuscate an EncryptedNumber, <code>encryptedNumber</code>:
- *         <br>
- *         <code>EncryptedNumber obfuscatedEncrypion = encryptedNumber.obfuscate();</code>
+ *         To check whether the PaillierContext of an EncodedNumber or an EncryptedNumber
+ *         is the same as this PaillierContext
  *     </li>
  *     <li>
- *         To decrease the exponent of an EncryptedNumber, <code>encryptedNumber</code>, to -20:
- *         <br>
- *         <code>EncryptedNumber decreasedExponent = encryptedNumber.decreaseExponentTo(-20);</code>
+ *         To decrypt this encrypted number
  *     </li>
  *     <li>
- *         To add two EncryptedNumbers, <code>encryption1 + encryption2</code>:
- *         <br>
- *         <code>EncryptedNumber additionResult = encryption1.add(encryption2);</code>
- *     </li>
- *     <li>
- *         To add an EncryptedNumber and an EncodedNumber, <code>encryption + encoded</code>:
- *         <br>
- *         <code>EncryptedNumber additionResult = encryption.add(encoded);</code>
- *     </li>
- *     <li>
- *         To subtract an EncryptedNumber from another EncryptedNumber, <code>encryption1 - encryption2</code>:
- *         <br>
- *         <code>EncryptedNumber subtractionResult = encryption1.subtract(encryption2);</code>
- *     </li>
- *     <li>
- *         To subtract an EncodedNumber from an EncryptedNumber, <code>encryption - encoded</code>:
- *         <br>
- *         <code>EncryptedNumber subtractionResult = encryption.subtract(encoded);</code>
- *     </li>
- *     <li>
- *         To multiply an EncryptedNumber with an EncodedNumber, <code>encryption * encoded</code>:
- *         <br>
- *         <code>EncryptedNumber multiplicationResult = encryption.multiply(encoded);</code>
- *     </li>
- *     <li>
- *         To divide an EncryptedNumber by a double, <code>encryption / numDouble</code>:
- *         <br>
- *         <code>EncryptedNumber divisionResult = encryption.divide(numDouble);</code>
+ *         To perform arithmetic operations computation (support addition, subtraction,
+ *         limited multiplication and limited division)
  *     </li>
  * </ul>
  */
 public final class EncryptedNumber {
-
+  /**
+   * A serializer interface for {@code EncryptedNumber}.
+   */
   public static interface Serializer {
 
     void serialize(PaillierContext context, BigInteger value, int exponent);
   }
 
+  /**
+   * The Paillier context associated to this encrypted number.
+   */
   protected final PaillierContext context;
+
+  /**
+   * The ciphertext.
+   */
   protected final transient BigInteger ciphertext;
+
+  /**
+   * The exponent of the encrypted number.
+   */
   protected final int exponent;
+
+  /**
+   * Denotes whether the encrypted number has been obfuscated.
+   */
   protected final boolean isSafe;
 
   /**
-   * Constructs an encrypted number given the public key used to encrypt this
-   * encrypted number, the ciphertext (ie, the encrypted representation of the
-   * encoded number) and the exponent representing the precision of the
+   * Constructs an encrypted number given the Paillier context used to encrypt this
+   * number, the ciphertext and the exponent representing the precision of the
    * ciphertext.
    *
-   * @param context PaillierContext used to encrypt this encrypted number.
+   * @param context PaillierContext associated to this encrypted number.
    * @param ciphertext the encrypted representation of the encoded number.
-   * @param exponent the exponent of the ciphertext.
-   * @param isSafe set to true if cypertext is obfuscated
+   * @param exponent of the encrypted number.
+   * @param isSafe set to true if ciphertext is obfuscated, false otherwise.
    */
   public EncryptedNumber(PaillierContext context, BigInteger ciphertext, int exponent,
                          boolean isSafe) {
@@ -136,122 +107,237 @@ public final class EncryptedNumber {
    * encoded number) and the exponent representing the precision of the
    * ciphertext.
    *
-   * @param context PaillierContext used to encrypt this encrypted number.
+   * @param context PaillierContext associated to this encrypted number.
    * @param ciphertext the encrypted representation of the encoded number.
-   * @param exponent the exponent of the ciphertext.
+   * @param exponent the exponent of the encrypted number.
    */
   public EncryptedNumber(PaillierContext context, BigInteger ciphertext, int exponent) {
     this(context, ciphertext, exponent, false);
   }
 
+  /**
+   * @return the associated Paillier {@code context}.
+   */
   public PaillierContext getContext() {
     return context;
   }
 
   /**
-   * Gets the ciphertext.
-   *
-   * @return ciphertext.
+   * @return the {@code ciphertext}.
    */
   public BigInteger calculateCiphertext() {
     return isSafe ? ciphertext : obfuscate().ciphertext;
   }
 
+  /**
+   * @return the {@code exponent}.
+   */
   public int getExponent() {
     return exponent;
   }
 
+  /**
+   * Checks whether another {@code EncryptedNumber} has the same context as this {@code EncryptedNumber}.
+   *
+   * @param other {@code EncryptedNumber} to compare to.
+   * @return {@code other} provided the contexts match, else PaillierContextMismatchException is thrown.
+   * @throws PaillierContextMismatchException if the context is different.
+   */
   public EncryptedNumber checkSameContext(EncryptedNumber other)
-          throws ArithmeticException {
+          throws PaillierContextMismatchException {
     return context.checkSameContext(other);
   }
 
-  public EncodedNumber checkSameContext(EncodedNumber other) {
+  /**
+   * Checks whether an {@code EncodedNumber} has the same context as this {@code EncryptedNumber}.
+   *
+   * @param other {@code EncodedNumber} to compare to.
+   * @return {@code other} if the {@code PaillierContext} match, else PaillierContextMismatchException is thrown.
+   * @throws PaillierContextMismatchException if the context is different.
+   */
+  public EncodedNumber checkSameContext(EncodedNumber other) throws PaillierContextMismatchException {
     return context.checkSameContext(other);
   }
 
+  /**
+   * Decrypts this {@code EncryptedNumber} using a private key. See
+   * {@link com.n1analytics.paillier.PaillierPrivateKey#decrypt(EncryptedNumber)} for more details.
+   *
+   * @param key private key to decrypt.
+   * @return the decryption result.
+   */
   public EncodedNumber decrypt(PaillierPrivateKey key) {
     return key.decrypt(this);
   }
 
   /**
-   * Obfuscates the encrypted number by multiplying it with r<sup>n</sup>,
-   * where n is the modulus of the public key and r is a random positive
-   * number less than n.
-   * @return An obfuscated version of this encrypted number.
+   * Obfuscates this {@code EncryptedNumber} by multiplying it with <code>r<sup>n</sup></code>,
+   * where {@code n} is the modulus of the public key and {@code r} is a random positive
+   * number less than {@code n}.
+   *
+   * @return the obfuscated {@code EncryptedNumber}.
    */
   public EncryptedNumber obfuscate() {
     return context.obfuscate(this);
   }
 
+  /**
+   * Decreases the exponent of this {@code EncryptedNumber} to {@code newExp}, if {@code newExp} is less than
+   * the current {@code exponent}.
+   * See {@link com.n1analytics.paillier.PaillierContext#decreaseExponentTo(EncryptedNumber, int)} for details.
+   *
+   * @param newExp the new {@code exponent}, must be less than the current {@code exponent}.
+   * @return an {@code EncryptedNumber} representing the same value with {@code exponent} equals to {@code newExp}.
+   */
+  public EncryptedNumber decreaseExponentTo(int newExp) {
+    return context.decreaseExponentTo(this, newExp);
+  }
+
+  /**
+   * Adds another {@code EncryptedNumber} to this {@code EncryptedNumber}. See
+   * {@link com.n1analytics.paillier.PaillierContext#add(EncryptedNumber, EncryptedNumber)} for more details.
+   *
+   * @param other {@code EncryptedNumber} to be added.
+   * @return the addition result.
+   */
   public EncryptedNumber add(EncryptedNumber other) {
     return context.add(this, other);
   }
 
+  /**
+   * Adds an {@code EncodedNumber} to this {@code EncryptedNumber}. See
+   * {@link com.n1analytics.paillier.PaillierContext#add(EncryptedNumber, EncodedNumber)} for more details.
+   *
+   * @param other {@code EncodedNumber} to be added.
+   * @return the addition result.
+   */
   public EncryptedNumber add(EncodedNumber other) {
     return context.add(this, other);
   }
 
-  public EncryptedNumber add(Number other) {
-    return add(context.encode(other));
-  }
-
+  /**
+   * Adds a {@code BigInteger} to this {@code EncryptedNumber}.
+   *
+   * @param other {@code BigInteger} to be added.
+   * @return the addition result.
+   */
   public EncryptedNumber add(BigInteger other) {
     return add(context.encode(other));
   }
 
+  /**
+   * Adds a {@code double} to this {@code EncryptedNumber}.
+   *
+   * @param other {@code double} to be added.
+   * @return the addition result.
+   */
   public EncryptedNumber add(double other) {
     return add(context.encode(other));
   }
 
+  /**
+   * Adds a {@code long} to this {@code EncryptedNumber}.
+   *
+   * @param other {@code long} to be added.
+   * @return the addition result.
+   */
   public EncryptedNumber add(long other) {
     return add(context.encode(other));
   }
 
+  /**
+   * @return the additive inverse of this.
+   */
   public EncryptedNumber additiveInverse() {
     return context.additiveInverse(this);
   }
 
+  /**
+   * Subtracts another {@code EncryptedNumber} from this {@code EncryptedNumber}.
+   *
+   * @param other {@code EncryptedNumber} to be subtracted from this.
+   * @return the subtraction result.
+   */
   public EncryptedNumber subtract(EncryptedNumber other) {
     return context.subtract(this, other);
   }
 
+  /**
+   * Subtracts an {@code EncodedNumber} from this {@code EncryptedNumber}.
+   *
+   * @param other {@code EncodedNumber} to be subtracted from this.
+   * @return the subtraction result.
+   */
   public EncryptedNumber subtract(EncodedNumber other) {
     return context.subtract(this, other);
   }
 
-  public EncryptedNumber subtract(Number other) {
-    return subtract(context.encode(other));
-  }
-
+  /**
+   * Subtracts a {@code BigInteger} from this {@code EncryptedNumber}.
+   *
+   * @param other {@code BigInteger} to be subtracted from this.
+   * @return the subtraction result.
+   */
   public EncryptedNumber subtract(BigInteger other) {
     return subtract(context.encode(other));
   }
 
+  /**
+   * Subtracts a {@code double} from this {@code EncryptedNumber}.
+   *
+   * @param other {@code double} to be subtracted from this.
+   * @return the subtraction result.
+   */
   public EncryptedNumber subtract(double other) {
     return subtract(context.encode(other));
   }
 
+  /**
+   * Subtracts a {@code long} from this {@code EncryptedNumber}.
+   *
+   * @param other {@code long} to be subtracted from this.
+   * @return the subtraction result.
+   */
   public EncryptedNumber subtract(long other) {
     return subtract(context.encode(other));
   }
 
+  /**
+   * Multiplies an {@code EncodedNumber} with this {@code EncryptedNumber}.
+   *
+   * @param other {@code EncodedNumber} to be multiplied with.
+   * @return the multiplication result.
+   */
   public EncryptedNumber multiply(EncodedNumber other) {
     return context.multiply(this, other);
   }
 
-  public EncryptedNumber multiply(Number other) {
-    return multiply(context.encode(other));
-  }
-
+  /**
+   * Multiplies a {@code BigInteger} with this {@code EncryptedNumber}.
+   *
+   * @param other {@code BigInteger} to be multiplied with.
+   * @return the multiplication result.
+   */
   public EncryptedNumber multiply(BigInteger other) {
     return multiply(context.encode(other));
   }
 
+  /**
+   * Multiplies a {@code double} with this {@code EncryptedNumber}.
+   *
+   * @param other {@code double} to be multiplied with.
+   * @return the multiplication result.
+   */
   public EncryptedNumber multiply(double other) {
     return multiply(context.encode(other));
   }
 
+  /**
+   * Multiplies a {@code long} with this {@code EncryptedNumber}.
+   *
+   * @param other {@code long} to be multiplied with.
+   * @return the multiplication result.
+   */
   public EncryptedNumber multiply(long other) {
     return multiply(context.encode(other));
   }
@@ -271,14 +357,31 @@ public final class EncryptedNumber {
     }
     */
 
+  /**
+   * Divides this {@code EncryptedNumber} with a {@code double}.
+   *
+   * @param other {@code double} to divide this with.
+   * @return the division result.
+   */
   public EncryptedNumber divide(double other) {
     return multiply(context.encode(1.0 / other)); // TODO Issue #10: unhack
   }
 
+  /**
+   * Divides this {@code EncryptedNumber} with a {@code long}.
+   *
+   * @param other {@code long} to divide this with.
+   * @return the division result.
+   */
   public EncryptedNumber divide(long other) {
     return multiply(context.encode(1.0 / other)); // TODO Issue #10: unhack
   }
 
+  /**
+   * Serializes the {@code EncryptedNumber}.
+   *
+   * @param serializer to serialize the {@code EncryptedNumber}.
+   */
   public void serialize(Serializer serializer) {
     serializer.serialize(context, calculateCiphertext(), exponent);
   }
