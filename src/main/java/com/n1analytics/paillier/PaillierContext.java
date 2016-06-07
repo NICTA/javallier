@@ -765,8 +765,11 @@ public class PaillierContext {
           throws PaillierContextMismatchException {
     checkSameContext(operand1);
     checkSameContext(operand2);
-    //we try to adjust operand2's exponent to operand1's exponent, because then the addition 
-    //of the two encrypted values will not have to perform an expensive raw_multiply.
+    //addition only works if both numbers have the same exponent. Adjusting the exponent of an 
+    //encrypted number can only be done with an encrypted multiplication (internally, this is
+    //done with a modular exponentiation). 
+    //It is going to be computationally much cheaper to adjust the encoded number before the 
+    //encryption as we only need to do a modular multiplication.
     int exponent1 = operand1.getExponent();
     int exponent2 = operand2.getExponent();
     BigInteger value2 = operand2.value;
