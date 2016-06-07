@@ -337,7 +337,6 @@ public class PaillierEncodedNumberTest {
     
     @Test
     public void testSignum() throws Exception {
-      System.out.println("testing signum!");
       BigInteger[] testNumbers = new BigInteger[] { BigInteger.ZERO, BigInteger.ONE, BigInteger.ONE.negate(),
           conf.maxSignificand(), conf.minSignificand() };
       for (BigInteger n : testNumbers) {
