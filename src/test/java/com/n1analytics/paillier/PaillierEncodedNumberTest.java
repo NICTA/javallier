@@ -334,6 +334,25 @@ public class PaillierEncodedNumberTest {
     public void testRange() {
       testRange(conf);
     }
+    
+    @Test
+    public void testSignum() throws Exception {
+      System.out.println("testing signum!");
+      BigInteger[] testNumbers = new BigInteger[] { BigInteger.ZERO, BigInteger.ONE, BigInteger.ONE.negate(),
+          conf.maxSignificand(), conf.minSignificand() };
+      for (BigInteger n : testNumbers) {
+        try {
+          EncodedNumber en = conf.context().encode(n);
+          if (en.isValid()) {
+            assertEquals(en.signum(), n.signum());
+          }
+        } catch (Exception e) {
+          if (!e.getClass().equals(EncodeException.class)) {
+            fail("unexpected Exception");
+          }
+        }
+      }
+    }
 
     @Test
     public void testMaxEncodableNumber() throws Exception {

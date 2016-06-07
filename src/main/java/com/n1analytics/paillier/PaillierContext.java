@@ -763,25 +763,23 @@ public class PaillierContext {
    */
   public EncryptedNumber add(EncryptedNumber operand1, EncodedNumber operand2)
           throws PaillierContextMismatchException {
+    checkSameContext(operand1);
+    checkSameContext(operand2);
     //we try to adjust operand2's exponent to operand1's exponent, because then the addition 
     //of the two encrypted values will not have to perform an expensive raw_multiply.
     int exponent1 = operand1.getExponent();
     int exponent2 = operand2.getExponent();
     BigInteger value2 = operand2.value;
     if(exponent1 < exponent2){
-      value2 = value2.shiftLeft(exponent2-exponent1).mod(publicKey.getModulus());
+      value2 = value2.multiply(getRescalingFactor(exponent2-exponent1)).mod(publicKey.getModulus());
       return add(operand1, encrypt(new EncodedNumber(this, value2, exponent1)));
     }
     if(exponent1 > exponent2 && operand2.signum() == 1){
       //test if we can shift value2 to the right without loosing information
       //Note, this only works for positive values.
-      int diff = exponent1 - exponent2;
-      boolean canShift = true;
-      for(int i=0; i<diff; i++){ //test if last diff bits are all zero
-        canShift &= !value2.testBit(i);
-      }
+      boolean canShift = value2.mod(getRescalingFactor(exponent1-exponent2)).equals(BigInteger.ZERO);
       if(canShift){
-        value2 = value2.shiftRight(exponent1-exponent2);
+        value2 = value2.divide(getRescalingFactor(exponent1-exponent2));
         return add(operand1, encrypt(new EncodedNumber(this, value2, exponent1)));
       }
     }
