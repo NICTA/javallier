@@ -725,7 +725,7 @@ public class PaillierContext {
     final BigInteger value2 = operand2.getValue();
     final BigInteger result = publicKey.raw_multiply(value1, value2);
     final int exponent = operand1.getExponent() + operand2.getExponent();
-    return new EncryptedNumber(this, result, exponent);
+    return new EncryptedNumber(this, result, exponent, operand1.isSafe);
   }
 
   /**
