@@ -3,6 +3,17 @@ import base64
 import cmath
 
 
+def base64url_decode(payload):
+    l = len(payload) % 4
+    if l == 2:
+        payload += '=='
+    elif l == 3:
+        payload += '='
+    elif l != 0:
+        raise ValueError('Invalid base64 string')
+    return base64.urlsafe_b64decode(payload.encode('utf-8'))
+
+
 def run_jar_command(cmd):
 
     command = ['java', '-jar', './target/scala-2.10/javallier.jar'] + list(cmd)
@@ -13,7 +24,7 @@ def run_jar_command(cmd):
                             stderr=subprocess.PIPE)
     out, err = proc.communicate()
 
-    if('Exception' in err or 'Parsing failed' in err):
+    if 'Exception' in err or 'Parsing failed' in err:
         raise RuntimeError("javallier.jar raises an exception: " + err)
 
     return out, err
@@ -50,7 +61,7 @@ def check_genpkey_verbose_output(out, err):
 
 def get_keylength(priv_key):
     mod = priv_key['pub']['n']
-    return int.from_bytes(base64.b64decode(mod),'big').bit_length()
+    return int.from_bytes(base64url_decode(mod), 'big').bit_length()
 
 
 def check_extracted_public_key(pub_key_json):
@@ -59,6 +70,9 @@ def check_extracted_public_key(pub_key_json):
     assert 'alg' in pub_key_json
     assert 'lambda' not in pub_key_json
     assert 'mu' not in pub_key_json
+    assert '=' not in pub_key_json['n']
+    assert '/' not in pub_key_json['n']
+    assert '+' not in pub_key_json['n']
 
 
 def check_encrypted_number(out):
