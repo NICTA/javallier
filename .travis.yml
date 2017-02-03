@@ -20,7 +20,7 @@ script:
     - sbt test
     - sbt 'project benchmark' 'jmh:run -i 3 -wi 3 -f1 -t1'
     - sbt assembly
-    - python src/test/cli/cliTest.py
+    - python3 src/test/cli/cliTest.py
 
 notifications:
   slack:
