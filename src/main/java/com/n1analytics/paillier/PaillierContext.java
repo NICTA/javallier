@@ -721,8 +721,14 @@ public class PaillierContext {
           throws PaillierContextMismatchException {
     checkSameContext(operand1);
     checkSameContext(operand2);
-    final BigInteger value1 = operand1.ciphertext;
-    final BigInteger value2 = operand2.getValue();
+    BigInteger value1 = operand1.ciphertext;
+    BigInteger value2 = operand2.getValue();
+    BigInteger neg_plain = publicKey.getModulus().subtract(value2);
+    // If the plaintext is large, exponentiate using its negative instead.
+    if (neg_plain.compareTo(encoding.getMaxEncoded()) <= 0) {
+        value1 = BigIntegerUtil.modInverse(value1, publicKey.getModulusSquared());
+        value2 = neg_plain;
+    }
     final BigInteger result = publicKey.raw_multiply(value1, value2);
     final int exponent = operand1.getExponent() + operand2.getExponent();
     return new EncryptedNumber(this, result, exponent, operand1.isSafe);
