@@ -89,7 +89,7 @@ public class BigIntegerUtil {
   }
 
   /**
-   * Computes the multiplicitive inverse of `a` in the integers, modular `b`.
+   * Computes the multiplicitive inverse of `a` in the integers, modulo `b`.
    *
    * @param a the number to invert
    * @param b the modulus
@@ -100,7 +100,7 @@ public class BigIntegerUtil {
     if(USE_GMP){
       return Gmp.modInverse(a, b);
     } else {
-    return a.modInverse(b);
+      return a.modInverse(b);
     }
   }
 
