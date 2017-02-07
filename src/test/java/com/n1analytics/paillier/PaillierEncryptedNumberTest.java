@@ -1035,11 +1035,11 @@ public class PaillierEncryptedNumberTest {
     @Test
     public void testCiphertextObfuscation() throws Exception {
       EncryptedNumber encryptedNumber = context.encrypt(3.14);
-      BigInteger ciphertext = encryptedNumber.ciphertext;
+      BigInteger ciphertext = encryptedNumber.calculateCiphertext();
       assertEquals(encryptedNumber.isSafe, false);
 
       EncryptedNumber obfuscatedEncryptedNumber = encryptedNumber.obfuscate();
-      BigInteger obfuscatedCiphertext = obfuscatedEncryptedNumber.ciphertext;
+      BigInteger obfuscatedCiphertext = obfuscatedEncryptedNumber.calculateCiphertext();
 
       assertNotNull(obfuscatedEncryptedNumber);
       assertEquals(obfuscatedEncryptedNumber.isSafe, true);
@@ -1051,14 +1051,14 @@ public class PaillierEncryptedNumberTest {
     public void testNotObfuscated() throws Exception {
       EncryptedNumber encryptedNumber = context.encrypt(context.encode(3.14, 103));
       assertEquals(encryptedNumber.isSafe, false);
-      BigInteger ciphertext1 = encryptedNumber.ciphertext;
+      BigInteger ciphertext1 = encryptedNumber.calculateCiphertext();
 
       EncryptedNumber encryptedNumber2 = encryptedNumber.obfuscate();
-      BigInteger ciphertext2 = encryptedNumber2.ciphertext;
+      BigInteger ciphertext2 = encryptedNumber2.calculateCiphertext();
       assertEquals(encryptedNumber2.isSafe, true);
 
       EncryptedNumber encryptedNumber3 = encryptedNumber2.obfuscate();
-      BigInteger ciphertext3 = encryptedNumber3.ciphertext;
+      BigInteger ciphertext3 = encryptedNumber3.calculateCiphertext();
       assertEquals(encryptedNumber3.isSafe, true);
 
       BigInteger ciphertext4 = encryptedNumber2.calculateCiphertext();

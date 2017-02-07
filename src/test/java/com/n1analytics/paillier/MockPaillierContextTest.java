@@ -88,14 +88,14 @@ public class MockPaillierContextTest {
     EncodedNumber m = mockContext.encode(123);
     EncryptedNumber nplusm = mockContext.encrypt(n).add(mockContext.encrypt(m));
     EncodedNumber nplusm_e = n.add(m);
-    assertEquals(nplusm.ciphertext, nplusm_e.value);
+    assertEquals(nplusm.calculateCiphertext(), nplusm_e.value);
     assertEquals(nplusm.exponent, nplusm_e.exponent);
 
     EncodedNumber n2 = mockContext.encode(123);
     EncodedNumber m2 = mockContext.encode(42.42e-120);
     EncryptedNumber nplusm2 = mockContext.encrypt(n2).add(mockContext.encrypt(m2));
     EncodedNumber nplusm_e2 = n2.add(m2);
-    assertEquals(nplusm2.ciphertext, nplusm_e2.value);
+    assertEquals(nplusm2.calculateCiphertext(), nplusm_e2.value);
     assertEquals(nplusm2.exponent, nplusm_e2.exponent);
   }
   
