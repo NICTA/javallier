@@ -70,6 +70,14 @@ public class AdditionTest {
     public EncodedNumber eval(EncodedNumber arg1, EncodedNumber arg2);
   }
 
+  /**
+   * Combinations of adding Encrypted number to test:
+   *  - adding using Object api
+   *  - adding using context
+   *  - with arguments reversed
+   *  - adding obfuscated numbers
+   *  - adding non-obfuscated with obfuscated
+   * */
   BinaryAdder1 binaryAdders1[] = new BinaryAdder1[]{new BinaryAdder1() {
     @Override
     public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg2) {
@@ -90,7 +98,48 @@ public class AdditionTest {
     public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg2) {
       return context.add(arg2, arg1);
     }
-  }};
+  }, new BinaryAdder1() {
+    @Override
+    public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg2) {
+      return arg1.obfuscate().add(arg2.obfuscate());
+    }
+  }, new BinaryAdder1() {
+    @Override
+    public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg2) {
+      return arg2.obfuscate().add(arg1.obfuscate());
+    }
+  }, new BinaryAdder1() {
+    @Override
+    public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg2) {
+      return context.add(arg1.obfuscate(), arg2.obfuscate());
+    }
+  }, new BinaryAdder1() {
+    @Override
+    public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg2) {
+      return context.add(arg2.obfuscate(), arg1.obfuscate());
+    }
+  }, new BinaryAdder1() {
+    @Override
+    public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg2) {
+      return arg1.add(arg2.obfuscate());
+    }
+  }, new BinaryAdder1() {
+    @Override
+    public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg2) {
+      return arg1.obfuscate().add(arg2);
+    }
+  }, new BinaryAdder1() {
+    @Override
+    public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg2) {
+      return context.add(arg1, arg2.obfuscate());
+    }
+  }, new BinaryAdder1() {
+    @Override
+    public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg2) {
+      return context.add(arg1.obfuscate(), arg2);
+    }
+  }
+  };
 
   BinaryAdder2 binaryAdders2[] = new BinaryAdder2[]{new BinaryAdder2() {
     @Override
@@ -100,17 +149,37 @@ public class AdditionTest {
   }, new BinaryAdder2() {
     @Override
     public EncryptedNumber eval(EncryptedNumber arg1, EncodedNumber arg2) {
+      return arg1.obfuscate().add(arg2);
+    }
+  }, new BinaryAdder2() {
+    @Override
+    public EncryptedNumber eval(EncryptedNumber arg1, EncodedNumber arg2) {
       return arg2.add(arg1);
+    }
+  }, new BinaryAdder2() {
+    @Override
+    public EncryptedNumber eval(EncryptedNumber arg1, EncodedNumber arg2) {
+      return arg2.add(arg1.obfuscate());
     }
   }, new BinaryAdder2() {
     @Override
     public EncryptedNumber eval(EncryptedNumber arg1, EncodedNumber arg2) {
       return context.add(arg1, arg2);
     }
+  },  new BinaryAdder2() {
+    @Override
+    public EncryptedNumber eval(EncryptedNumber arg1, EncodedNumber arg2) {
+      return context.add(arg1.obfuscate(), arg2);
+    }
   }, new BinaryAdder2() {
     @Override
     public EncryptedNumber eval(EncryptedNumber arg1, EncodedNumber arg2) {
       return context.add(arg2, arg1);
+    }
+  }, new BinaryAdder2() {
+    @Override
+    public EncryptedNumber eval(EncryptedNumber arg1, EncodedNumber arg2) {
+      return context.add(arg2, arg1.obfuscate());
     }
   }};
 
