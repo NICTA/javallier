@@ -44,6 +44,9 @@ public class TestConfiguration {
 //  public static final TestConfiguration CONFIGURATION_DOUBLE = create(
 //      PRIVATE_KEY_DOUBLE, true, 1 + DOUBLE_MAX_PRECISION);
 
+  // the maximum number of iterations for randomized tests. 
+  public static final int MAX_ITERATIONS = 50;
+  
   public static final PaillierPrivateKey PRIVATE_KEY_512 = PaillierPrivateKey
       .create(512);
   public static final TestConfiguration UNSIGNED_FULL_PRECISION_512 = createUnsignedFullPrecision(PRIVATE_KEY_512);
