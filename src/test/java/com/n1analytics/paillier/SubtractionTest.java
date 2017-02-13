@@ -13,6 +13,7 @@
  */
 package com.n1analytics.paillier;
 
+import com.n1analytics.paillier.util.BigIntegerUtil;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -32,7 +33,7 @@ public class SubtractionTest {
   private PaillierContext context;
   private PaillierPrivateKey privateKey;
 
-  static private int maxIteration = 100;
+  static private int maxIteration = TestConfiguration.MAX_ITERATIONS;
 
   @Parameterized.Parameters
   public static Collection<Object[]> configurations() {
@@ -51,100 +52,198 @@ public class SubtractionTest {
     privateKey = conf.privateKey();
   }
 
-  interface BinarySubtractor1
-          extends TwoInputsFunction<EncryptedNumber, EncryptedNumber, EncryptedNumber> {
-
-    public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg2);
+  interface EncryptedToEncryptedSubtractor {
+    public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
+                                EncryptedNumber arg2_nonObfuscated, EncryptedNumber arg2_obfuscated);
   }
 
-  interface BinarySubtractor2
-          extends TwoInputsFunction<EncryptedNumber, EncodedNumber, EncryptedNumber> {
-
-    public EncryptedNumber eval(EncryptedNumber arg1, EncodedNumber arg2);
+  interface EncryptedToEncodedSubtractor {
+    public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated, EncodedNumber arg2);
   }
 
-  interface BinarySubtractor4
-          extends TwoInputsFunction<EncodedNumber, EncodedNumber, EncodedNumber> {
-
+  interface EncodedToEncodedSubtractor {
     public EncodedNumber eval(EncodedNumber arg1, EncodedNumber arg2);
   }
 
-  BinarySubtractor1 binarySubtractors1[] = new BinarySubtractor1[]{new BinarySubtractor1() {
-    @Override
-    public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg2) {
-      return arg1.subtract(arg2);
-    }
-  }, new BinarySubtractor1() {
-    @Override
-    public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg2) {
-      return context.subtract(arg1, arg2);
-    }
-  }};
+  /**
+   * Subtracting encrypted number from another encrypted number, possible combinations
+   * (using subtraction in API and context):
+   *  - Non-obfuscated / non-obfuscated
+   *  - Obfuscated / obfuscated
+   *  - Non-obfuscated / obfuscated
+   *  - Obfuscated / non-obfuscated
+   */
+  EncryptedToEncryptedSubtractor encryptedToEncryptedSubtractors[] = new EncryptedToEncryptedSubtractor[]{
+          new EncryptedToEncryptedSubtractor() {
+            @Override
+            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
+                                        EncryptedNumber arg2_nonObfuscated, EncryptedNumber arg2_obfuscated) {
+              return arg1_nonObfuscated.subtract(arg2_nonObfuscated);
+            }
+          },
+          new EncryptedToEncryptedSubtractor() {
+            @Override
+            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
+                                        EncryptedNumber arg2_nonObfuscated, EncryptedNumber arg2_obfuscated) {
+              return context.subtract(arg1_nonObfuscated, arg2_nonObfuscated);
+            }
+          },
+          new EncryptedToEncryptedSubtractor() {
+            @Override
+            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
+                                        EncryptedNumber arg2_nonObfuscated, EncryptedNumber arg2_obfuscated) {
+              return arg1_obfuscated.subtract(arg2_obfuscated);
+            }
+          },
+          new EncryptedToEncryptedSubtractor() {
+            @Override
+            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
+                                        EncryptedNumber arg2_nonObfuscated, EncryptedNumber arg2_obfuscated) {
+              return context.subtract(arg1_obfuscated, arg2_obfuscated);
+            }
+          },
+          new EncryptedToEncryptedSubtractor() {
+            @Override
+            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
+                                        EncryptedNumber arg2_nonObfuscated, EncryptedNumber arg2_obfuscated) {
+              return arg1_nonObfuscated.subtract(arg2_obfuscated);
+            }
+          },
+          new EncryptedToEncryptedSubtractor() {
+            @Override
+            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
+                                        EncryptedNumber arg2_nonObfuscated, EncryptedNumber arg2_obfuscated) {
+              return context.subtract(arg1_nonObfuscated, arg2_obfuscated);
+            }
+          },
+          new EncryptedToEncryptedSubtractor() {
+            @Override
+            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
+                                        EncryptedNumber arg2_nonObfuscated, EncryptedNumber arg2_obfuscated) {
+              return arg1_obfuscated.subtract(arg2_nonObfuscated);
+            }
+          },
+          new EncryptedToEncryptedSubtractor() {
+            @Override
+            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
+                                        EncryptedNumber arg2_nonObfuscated, EncryptedNumber arg2_obfuscated) {
+              return context.subtract(arg1_obfuscated, arg2_nonObfuscated);
+            }
+          },
+          new EncryptedToEncryptedSubtractor() {
+            @Override
+            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
+                                        EncryptedNumber arg2_nonObfuscated, EncryptedNumber arg2_obfuscated) {
+              return arg1_obfuscated.subtract(arg2_nonObfuscated);
+            }
+          },
+          new EncryptedToEncryptedSubtractor() {
+            @Override
+            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
+                                        EncryptedNumber arg2_nonObfuscated, EncryptedNumber arg2_obfuscated) {
+              return context.subtract(arg1_obfuscated, arg2_nonObfuscated);
+            }
+          }
 
-  BinarySubtractor1 binarySubtractorsRight1[] = new BinarySubtractor1[]{new BinarySubtractor1() {
-    @Override
-    public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg2) {
-      return arg2.subtract(arg1);
-    }
-  }, new BinarySubtractor1() {
-    @Override
-    public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg2) {
-      return context.subtract(arg2, arg1);
-    }
-  }};
+  };
 
-  BinarySubtractor2 binarySubtractors2[] = new BinarySubtractor2[]{new BinarySubtractor2() {
-    @Override
-    public EncryptedNumber eval(EncryptedNumber arg1, EncodedNumber arg2) {
-      return arg1.subtract(arg2);
-    }
-  }, new BinarySubtractor2() {
-    @Override
-    public EncryptedNumber eval(EncryptedNumber arg1, EncodedNumber arg2) {
-      return context.subtract(arg1, arg2);
-    }
-  }};
+  /**
+   * Subtracting encoded number from encrypted number, possible combinations
+   * (using subtraction in API and context):
+   *  - Non-obfuscated encrypted / encoded
+   *  - Obfuscated / encoded
+   */
+  EncryptedToEncodedSubtractor encryptedToEncodedSubtractors[] = new EncryptedToEncodedSubtractor[]{
+          new EncryptedToEncodedSubtractor() {
+            @Override
+            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
+                                        EncodedNumber arg2) {
+              return arg1_nonObfuscated.subtract(arg2);
+            }
+          },
+          new EncryptedToEncodedSubtractor() {
+            @Override
+            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
+                                        EncodedNumber arg2) {
+              return context.subtract(arg1_nonObfuscated, arg2);
+            }
+          },
+          new EncryptedToEncodedSubtractor() {
+            @Override
+            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
+                                        EncodedNumber arg2) {
+              return arg1_obfuscated.subtract(arg2);
+            }
+          },
+          new EncryptedToEncodedSubtractor() {
+            @Override
+            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
+                                        EncodedNumber arg2) {
+              return context.subtract(arg1_obfuscated, arg2);
+            }
+          }
+  };
 
-  BinarySubtractor2 binarySubtractorsRight2[] = new BinarySubtractor2[]{new BinarySubtractor2() {
-    @Override
-    public EncryptedNumber eval(EncryptedNumber arg1, EncodedNumber arg2) {
-      return arg2.subtract(arg1);
-    }
-  }, new BinarySubtractor2() {
-    @Override
-    public EncryptedNumber eval(EncryptedNumber arg1, EncodedNumber arg2) {
-      return context.subtract(arg2, arg1);
-    }
-  }};
+  /**
+   * Subtracting encoded number from encrypted number, possible combinations
+   * (using subtraction in API and context):
+   *  - Encoded / non-obfuscated
+   *  - Encoded / obfuscated
+   */
+  EncryptedToEncodedSubtractor encodedToEncryptedSubtractors[] = new EncryptedToEncodedSubtractor[] {
+          new EncryptedToEncodedSubtractor() {
+            @Override
+            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
+                                        EncodedNumber arg2) {
+              return arg2.subtract(arg1_nonObfuscated);
+            }
+          },
+          new EncryptedToEncodedSubtractor() {
+            @Override
+            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
+                                        EncodedNumber arg2) {
+              return context.subtract(arg2, arg1_nonObfuscated);
+            }
+          },
+          new EncryptedToEncodedSubtractor() {
+            @Override
+            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
+                                        EncodedNumber arg2) {
+              return arg2.subtract(arg1_obfuscated);
+            }
+          },
+          new EncryptedToEncodedSubtractor() {
+            @Override
+            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
+                                        EncodedNumber arg2) {
+              return context.subtract(arg2, arg1_obfuscated);
+            }
+          }
+  };
 
-  BinarySubtractor4 binarySubtractors4[] = new BinarySubtractor4[]{new BinarySubtractor4() {
-    @Override
-    public EncodedNumber eval(EncodedNumber arg1, EncodedNumber arg2) {
-      return arg1.subtract(arg2);
-    }
-  }, new BinarySubtractor4() {
-    @Override
-    public EncodedNumber eval(EncodedNumber arg1, EncodedNumber arg2) {
-      return context.subtract(arg1, arg2);
-    }
-  }};
+  /**
+   * Subtracting encoded number from another encoded number.
+   */
+  EncodedToEncodedSubtractor encodedToEncodedSubtractors[] = new EncodedToEncodedSubtractor[]{
+          new EncodedToEncodedSubtractor() {
+            @Override
+            public EncodedNumber eval(EncodedNumber arg1, EncodedNumber arg2) {
+              return arg1.subtract(arg2);
+            }
+          },
+          new EncodedToEncodedSubtractor() {
+            @Override
+            public EncodedNumber eval(EncodedNumber arg1, EncodedNumber arg2) {
+              return context.subtract(arg1, arg2);
+            }
+          }
+  };
 
-  BinarySubtractor4 binarySubtractorsRight4[] = new BinarySubtractor4[]{new BinarySubtractor4() {
-    @Override
-    public EncodedNumber eval(EncodedNumber arg1, EncodedNumber arg2) {
-      return arg2.subtract(arg1);
-    }
-  }, new BinarySubtractor4() {
-    @Override
-    public EncodedNumber eval(EncodedNumber arg1, EncodedNumber arg2) {
-      return context.subtract(arg2, arg1);
-    }
-  }};
-
-  void testDoubleSubtraction(BinarySubtractor1 subtractor) {
+  @Test
+  public void testDoubleSubtraction() {
     double a, b, plainResult, decodedResult, tolerance;
-    EncryptedNumber ciphertTextA, ciphertTextB, encryptedResult;
-    EncodedNumber decryptedResult;
+    EncryptedNumber cipherTextA, cipherTextA_obf, cipherTextB, cipherTextB_obf, encryptedResult;
+    EncodedNumber encodedA, encodedB, encodedResult, decryptedResult;
 
     for(int i = 0; i < maxIteration; i++) {
       a = randomFiniteDouble();
@@ -152,8 +251,9 @@ public class SubtractionTest {
 
       // Check if B and A are "close enough", otherwise there will be an undetected overflow
       double minB = a - (a * EPSILON), maxB = a + (a * EPSILON);
-      if(b > maxB || b < minB)
+      if(b > maxB || b < minB) {
         continue;
+      }
 
       plainResult = a - b;
 
@@ -161,140 +261,150 @@ public class SubtractionTest {
         continue;
       }
 
-      ciphertTextA = context.encrypt(a);
-      ciphertTextB = context.encrypt(b);
+      cipherTextA = context.encrypt(a);
+      cipherTextB = context.encrypt(b);
+      cipherTextA_obf = cipherTextA.obfuscate();
+      cipherTextB_obf = cipherTextB.obfuscate();
+      encodedA = context.encode(a);
+      encodedB = context.encode(b);
 
-      encryptedResult = subtractor.eval(ciphertTextA, ciphertTextB);
-      decryptedResult = encryptedResult.decrypt(privateKey);
+      double absValue = Math.abs(plainResult);
+      if (absValue == 0.0 || absValue > 1.0) {
+        tolerance = EPSILON * Math.pow(2.0, Math.getExponent(plainResult));
+      } else {
+        tolerance = EPSILON;
+      }
 
-      try {
-        decodedResult = decryptedResult.decodeDouble();
-
-        double absValue = Math.abs(plainResult);
-        if(absValue == 0.0 || absValue > 1.0) {
-          tolerance = EPSILON * Math.pow(2.0, Math.getExponent(plainResult));
-        } else {
-          tolerance = EPSILON;
+      for (EncryptedToEncryptedSubtractor subtractor : encryptedToEncryptedSubtractors) {
+        encryptedResult = subtractor.eval(cipherTextA, cipherTextA_obf, cipherTextB, cipherTextB_obf);
+        decryptedResult = encryptedResult.decrypt(privateKey);
+        try {
+          decodedResult = decryptedResult.decodeDouble();
+          assertEquals(plainResult, decodedResult, tolerance);
+        } catch (ArithmeticException e) {
+        } catch (DecodeException e) {
         }
+      }
 
-        assertEquals(plainResult, decodedResult, tolerance);
-      } catch (DecodeException e) {
+      for (EncryptedToEncodedSubtractor subtractor : encryptedToEncodedSubtractors) {
+        encryptedResult = subtractor.eval(cipherTextA, cipherTextA_obf, encodedB);
+        decryptedResult = encryptedResult.decrypt(privateKey);
+        try {
+          decodedResult = decryptedResult.decodeDouble();
+          assertEquals(plainResult, decodedResult, tolerance);
+        } catch (ArithmeticException e) {
+        } catch (DecodeException e) {
+          System.out.println("DecodeException thrown");
+        }
+      }
+
+      for (EncryptedToEncodedSubtractor subtractor: encodedToEncryptedSubtractors) {
+        encryptedResult = subtractor.eval(cipherTextB, cipherTextB_obf, encodedA);
+        decryptedResult = encryptedResult.decrypt(privateKey);
+        try {
+          decodedResult = decryptedResult.decodeDouble();
+          assertEquals(plainResult, decodedResult, tolerance);
+        } catch (ArithmeticException e) {
+        } catch (DecodeException e) {
+        }
+      }
+
+      for (EncodedToEncodedSubtractor subtractor : encodedToEncodedSubtractors) {
+        encodedResult = subtractor.eval(encodedA, encodedB);
+        try {
+          decodedResult = encodedResult.decodeDouble();
+          assertEquals(plainResult, decodedResult, tolerance);
+        } catch (ArithmeticException e) {
+        } catch (DecodeException e) {
+        }
       }
     }
   }
 
-  void testDoubleSubtractionRight(BinarySubtractor1 subtractor) {
-    double a, b, plainResult, decodedResult, tolerance;
-    EncryptedNumber ciphertTextA, ciphertTextB, encryptedResult;
-    EncodedNumber decryptedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
-      a = randomFiniteDouble();
-      b = randomFiniteDouble();
-
-      // Check if B and A are "close enough", otherwise there will be an undetected overflow
-      double minB = a - (a * EPSILON), maxB = a + (a * EPSILON);
-      if(b > maxB || b < minB)
-        continue;
-
-      plainResult = b - a;
-
-      if(context.isUnsigned() && (a < 0 || b < 0 || plainResult < 0)) {
-        continue;
-      }
-
-      ciphertTextA = context.encrypt(a);
-      ciphertTextB = context.encrypt(b);
-
-      encryptedResult = subtractor.eval(ciphertTextA, ciphertTextB);
-      decryptedResult = encryptedResult.decrypt(privateKey);
-
-      try {
-        decodedResult = decryptedResult.decodeDouble();
-
-        double absValue = Math.abs(plainResult);
-        if(absValue == 0.0 || absValue > 1.0) {
-          tolerance = EPSILON * Math.pow(2.0, Math.getExponent(plainResult));
-        } else {
-          tolerance = EPSILON;
-        }
-
-        assertEquals(plainResult, decodedResult, tolerance);
-      } catch (DecodeException e) {
-      }
-    }
-  }
-
-  void testLongSubtraction(BinarySubtractor1 subtractor) {
+  @Test
+  public void testLongSubtraction() {
     long a, b, plainResult, decodedResult;
-    EncryptedNumber ciphertTextA, ciphertTextB, encryptedResult;
-    EncodedNumber decryptedResult;
+    EncryptedNumber cipherTextA, cipherTextA_obf, cipherTextB, cipherTextB_obf, encryptedResult;
+    EncodedNumber encodedA, encodedB, encodedResult, decryptedResult;
 
     for(int i = 0; i < maxIteration; i++) {
       a = random.nextLong();
       b = random.nextLong();
+
+      if(context.isUnsigned() && (a < 0 || b < 0)) {
+        if (a < 0) {
+          a = -a;
+        }
+        if (b < 0) {
+          b = -b;
+        }
+      }
 
       plainResult = a - b;
 
-      if(context.isUnsigned() && (a < 0 || b < 0 || plainResult < 0)) {
-        continue;
+      cipherTextA = context.encrypt(a);
+      cipherTextB = context.encrypt(b);
+      cipherTextA_obf = cipherTextA.obfuscate();
+      cipherTextB_obf = cipherTextB.obfuscate();
+      encodedA = context.encode(a);
+      encodedB = context.encode(b);
+
+      for (EncryptedToEncryptedSubtractor subtractor : encryptedToEncryptedSubtractors) {
+        encryptedResult = subtractor.eval(cipherTextA, cipherTextA_obf, cipherTextB, cipherTextB_obf);
+        decryptedResult = encryptedResult.decrypt(privateKey);
+        try {
+          decodedResult = decryptedResult.decodeLong();
+          assertEquals(plainResult, decodedResult);
+        } catch (DecodeException e) {
+        }
       }
 
-      ciphertTextA = context.encrypt(a);
-      ciphertTextB = context.encrypt(b);
-
-      encryptedResult = subtractor.eval(ciphertTextA, ciphertTextB);
-      decryptedResult = encryptedResult.decrypt(privateKey);
-
-      try {
-        decodedResult = decryptedResult.decodeLong();
-
-        assertEquals(plainResult, decodedResult);
-      } catch (ArithmeticException e) {
-      } catch (DecodeException e) {
-      }
-    }
-  }
-
-  void testLongSubtractionRight(BinarySubtractor1 subtractor) {
-    long a, b, plainResult, decodedResult;
-    EncryptedNumber ciphertTextA, ciphertTextB, encryptedResult;
-    EncodedNumber decryptedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
-      a = random.nextLong();
-      b = random.nextLong();
-
-      plainResult = b - a;
-
-      if(context.isUnsigned() && (a < 0 || b < 0 || plainResult < 0)) {
-        continue;
+      for (EncryptedToEncodedSubtractor subtractor : encryptedToEncodedSubtractors) {
+        encryptedResult = subtractor.eval(cipherTextA, cipherTextA_obf, encodedB);
+        decryptedResult = encryptedResult.decrypt(privateKey);
+        try {
+          decodedResult = decryptedResult.decodeLong();
+          assertEquals(plainResult, decodedResult);
+        } catch (DecodeException e) {
+        }
       }
 
-      ciphertTextA = context.encrypt(a);
-      ciphertTextB = context.encrypt(b);
+      for (EncryptedToEncodedSubtractor subtractor: encodedToEncryptedSubtractors) {
+        encryptedResult = subtractor.eval(cipherTextB, cipherTextB_obf, encodedA);
+        decryptedResult = encryptedResult.decrypt(privateKey);
+        try {
+          decodedResult = decryptedResult.decodeLong();
+          assertEquals(plainResult, decodedResult);
+        } catch (DecodeException e) {
+        }
+      }
 
-      encryptedResult = subtractor.eval(ciphertTextA, ciphertTextB);
-      decryptedResult = encryptedResult.decrypt(privateKey);
-
-      try {
-        decodedResult = decryptedResult.decodeLong();
-
-        assertEquals(plainResult, decodedResult);
-      } catch (ArithmeticException e) {
-      } catch (DecodeException e) {
+      for (EncodedToEncodedSubtractor subtractor : encodedToEncodedSubtractors) {
+        encodedResult = subtractor.eval(encodedA, encodedB);
+        try {
+          decodedResult = encodedResult.decodeLong();
+          assertEquals(plainResult, decodedResult);
+        } catch (DecodeException e) {
+        }
       }
     }
   }
 
-  void testBigIntegerSubtraction(BinarySubtractor1 subtractor) {
+  @Test
+  public void testBigIntegerSubtraction() {
     BigInteger a, b, plainResult, decodedResult;
-    EncryptedNumber ciphertTextA, ciphertTextB, encryptedResult;
-    EncodedNumber decryptedResult;
+    EncryptedNumber cipherTextA, cipherTextA_obf, cipherTextB, cipherTextB_obf, encryptedResult;
+    EncodedNumber encodedA, encodedB, encodedResult, decryptedResult;
 
     for(int i = 0; i < maxIteration; i++) {
       a = new BigInteger(context.getPrecision(), random);
       b = new BigInteger(context.getPrecision(), random);
+
+      if(BigIntegerUtil.greater(a, context.getMaxSignificand()) || BigIntegerUtil.less(a, context.getMinSignificand()))
+        continue;
+
+      if(BigIntegerUtil.greater(b, context.getMaxSignificand()) || BigIntegerUtil.less(b, context.getMinSignificand()))
+        continue;
 
       // The random generator above only generates positive BigIntegers, the following code
       // negates some inputs.
@@ -310,550 +420,54 @@ public class SubtractionTest {
       }
 
       plainResult = a.subtract(b);
-      if(!isValid(context, a) || !isValid(context, b) || !isValid(context, plainResult))
+      if(!isValid(context, plainResult))
         continue;
 
-      ciphertTextA = context.encrypt(a);
-      ciphertTextB = context.encrypt(b);
-
-      encryptedResult = subtractor.eval(ciphertTextA, ciphertTextB);
-      decryptedResult = encryptedResult.decrypt(privateKey);
-
-      try {
-        decodedResult = decryptedResult.decodeBigInteger();
-
-        assertEquals(plainResult, decodedResult);
-      } catch (ArithmeticException e) {
-      }
-    }
-  }
-
-  void testBigIntegerSubtractionRight(BinarySubtractor1 subtractor) {
-    BigInteger a, b, plainResult, decodedResult;
-    EncryptedNumber ciphertTextA, ciphertTextB, encryptedResult;
-    EncodedNumber decryptedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
-      a = new BigInteger(context.getPrecision(), random);
-      b = new BigInteger(context.getPrecision(), random);
-
-      // The random generator above only generates positive BigIntegers, the following code
-      // negates some inputs.
-      if(context.isSigned()) {
-        if(i % 4 == 1) {
-          b = b.negate();
-        } else if(i % 4 == 2) {
-          a = a.negate();
-        } else if(i % 4 == 3) {
-          a = a.negate();
-          b = b.negate();
-        }
-      }
-
-      plainResult = b.subtract(a);
-      if(!isValid(context, a) || !isValid(context, b) || !isValid(context, plainResult))
-        continue;
-
-      ciphertTextA = context.encrypt(a);
-      ciphertTextB = context.encrypt(b);
-
-      encryptedResult = subtractor.eval(ciphertTextA, ciphertTextB);
-      decryptedResult = encryptedResult.decrypt(privateKey);
-
-      try {
-        decodedResult = decryptedResult.decodeBigInteger();
-
-        assertEquals(plainResult, decodedResult);
-      } catch (ArithmeticException e) {
-      }
-    }
-  }
-
-  void testDoubleSubtraction(BinarySubtractor2 subtractor) {
-    double a, b, plainResult, decodedResult, tolerance;
-    EncryptedNumber ciphertTextA, encryptedResult;
-    EncodedNumber encodedB, decryptedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
-      a = randomFiniteDouble();
-      b = randomFiniteDouble();
-
-      // Check if B and A are "close enough", otherwise there will be an undetected overflow
-      double minB = a - (a * EPSILON), maxB = a + (a * EPSILON);
-      if(b > maxB || b < minB)
-        continue;
-
-      plainResult = a - b;
-
-      if(context.isUnsigned() && (a < 0 || b < 0 || plainResult < 0)) {
-        continue;
-      }
-
-      ciphertTextA = context.encrypt(a);
-      encodedB = context.encode(b);
-
-      encryptedResult = subtractor.eval(ciphertTextA, encodedB);
-      decryptedResult = encryptedResult.decrypt(privateKey);
-
-      try {
-        decodedResult = decryptedResult.decodeDouble();
-
-        double absValue = Math.abs(plainResult);
-        if(absValue == 0.0 || absValue > 1.0) {
-          tolerance = EPSILON * Math.pow(2.0, Math.getExponent(plainResult));
-        } else {
-          tolerance = EPSILON;
-        }
-
-        assertEquals(plainResult, decodedResult, tolerance);
-      } catch (DecodeException e) {
-      }
-    }
-  }
-
-  void testDoubleSubtractionRight(BinarySubtractor2 subtractor) {
-    double a, b, plainResult, decodedResult, tolerance;
-    EncryptedNumber ciphertTextA, encryptedResult;
-    EncodedNumber encodedB, decryptedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
-      a = randomFiniteDouble();
-      b = randomFiniteDouble();
-
-      // Check if B and A are "close enough", otherwise there will be an undetected overflow
-      double minB = a - (a * EPSILON), maxB = a + (a * EPSILON);
-      if(b > maxB || b < minB)
-        continue;
-
-      plainResult = b - a;
-
-      if(context.isUnsigned() && (a < 0 || b < 0 || plainResult < 0)) {
-        continue;
-      }
-
-      ciphertTextA = context.encrypt(a);
-      encodedB = context.encode(b);
-
-      encryptedResult = subtractor.eval(ciphertTextA, encodedB);
-      decryptedResult = encryptedResult.decrypt(privateKey);
-
-      try {
-        decodedResult = decryptedResult.decodeDouble();
-
-        double absValue = Math.abs(plainResult);
-        if(absValue == 0.0 || absValue > 1.0) {
-          tolerance = EPSILON * Math.pow(2.0, Math.getExponent(plainResult));
-        } else {
-          tolerance = EPSILON;
-        }
-
-        assertEquals(plainResult, decodedResult, tolerance);
-      } catch (DecodeException e) {
-      }
-    }
-  }
-
-  void testLongSubtraction(BinarySubtractor2 subtractor) {
-    long a, b, plainResult, decodedResult;
-    EncryptedNumber ciphertTextA, encryptedResult;
-    EncodedNumber encodedB, decryptedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
-      a = random.nextLong();
-      b = random.nextLong();
-
-      plainResult = a - b;
-
-      if(context.isUnsigned() && (a < 0 || b < 0 || plainResult < 0)) {
-        continue;
-      }
-
-      ciphertTextA = context.encrypt(a);
-      encodedB = context.encode(b);
-
-      encryptedResult = subtractor.eval(ciphertTextA, encodedB);
-      decryptedResult = encryptedResult.decrypt(privateKey);
-
-      try {
-        decodedResult = decryptedResult.decodeLong();
-
-        assertEquals(plainResult, decodedResult);
-      } catch (ArithmeticException e) {
-      } catch (DecodeException e) {
-      }
-    }
-  }
-
-  void testLongSubtractionRight(BinarySubtractor2 subtractor) {
-    long a, b, plainResult, decodedResult;
-    EncryptedNumber ciphertTextA, encryptedResult;
-    EncodedNumber encodedB, decryptedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
-      a = random.nextLong();
-      b = random.nextLong();
-
-      plainResult = b - a;
-
-      if(context.isUnsigned() && (a < 0 || b < 0 || plainResult < 0)) {
-        continue;
-      }
-
-      ciphertTextA = context.encrypt(a);
-      encodedB = context.encode(b);
-
-      encryptedResult = subtractor.eval(ciphertTextA, encodedB);
-      decryptedResult = encryptedResult.decrypt(privateKey);
-
-      try {
-        decodedResult = decryptedResult.decodeLong();
-
-        assertEquals(plainResult, decodedResult);
-      } catch (ArithmeticException e) {
-      } catch (DecodeException e) {
-      }
-    }
-  }
-
-  void testBigIntegerSubtraction(BinarySubtractor2 subtractor) {
-    BigInteger a, b, plainResult, decodedResult;
-    EncryptedNumber ciphertTextA, encryptedResult;
-    EncodedNumber encodedB, decryptedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
-      a = new BigInteger(context.getPrecision(), random);
-      b = new BigInteger(context.getPrecision(), random);
-
-      // The random generator above only generates positive BigIntegers, the following code
-      // negates some inputs.
-      if(context.isSigned()) {
-        if(i % 4 == 1) {
-          b = b.negate();
-        } else if(i % 4 == 2) {
-          a = a.negate();
-        } else if(i % 4 == 3) {
-          a = a.negate();
-          b = b.negate();
-        }
-      }
-
-      plainResult = a.subtract(b);
-      if(!isValid(context, a) || !isValid(context, b) || !isValid(context, plainResult))
-        continue;
-
-      ciphertTextA = context.encrypt(a);
-      encodedB = context.encode(b);
-
-      encryptedResult = subtractor.eval(ciphertTextA, encodedB);
-      decryptedResult = encryptedResult.decrypt(privateKey);
-
-      try {
-        decodedResult = decryptedResult.decodeBigInteger();
-
-        assertEquals(plainResult, decodedResult);
-      } catch (ArithmeticException e) {
-      }
-    }
-  }
-
-  void testBigIntegerSubtractionRight(BinarySubtractor2 subtractor) {
-    BigInteger a, b, plainResult, decodedResult;
-    EncryptedNumber ciphertTextA, encryptedResult;
-    EncodedNumber encodedB, decryptedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
-      a = new BigInteger(context.getPrecision(), random);
-      b = new BigInteger(context.getPrecision(), random);
-
-      // The random generator above only generates positive BigIntegers, the following code
-      // negates some inputs.
-      if(context.isSigned()) {
-        if(i % 4 == 1) {
-          b = b.negate();
-        } else if(i % 4 == 2) {
-          a = a.negate();
-        } else if(i % 4 == 3) {
-          a = a.negate();
-          b = b.negate();
-        }
-      }
-
-      plainResult = b.subtract(a);
-      if(!isValid(context, a) || !isValid(context, b) || !isValid(context, plainResult))
-        continue;
-
-      ciphertTextA = context.encrypt(a);
-      encodedB = context.encode(b);
-
-      encryptedResult = subtractor.eval(ciphertTextA, encodedB);
-      decryptedResult = encryptedResult.decrypt(privateKey);
-
-      try {
-        decodedResult = decryptedResult.decodeBigInteger();
-
-        assertEquals(plainResult, decodedResult);
-      } catch (ArithmeticException e) {
-      }
-    }
-  }
-
-  void testDoubleSubtraction(BinarySubtractor4 subtractor) {
-    double a, b, plainResult, decodedResult, tolerance;
-    EncodedNumber encodedA, encodedB, encodedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
-      a = randomFiniteDouble();
-      b = randomFiniteDouble();
-
-      // Check if B and A are "close enough", otherwise there will be an undetected overflow
-      double minB = a - (a * EPSILON), maxB = a + (a * EPSILON);
-      if(b > maxB || b < minB)
-        continue;
-
-      plainResult = a - b;
-
-      if(context.isUnsigned() && (a < 0 || b < 0 || plainResult < 0)) {
-        continue;
-      }
-
+      cipherTextA = context.encrypt(a);
+      cipherTextB = context.encrypt(b);
+      cipherTextA_obf = cipherTextA.obfuscate();
+      cipherTextB_obf = cipherTextB.obfuscate();
       encodedA = context.encode(a);
       encodedB = context.encode(b);
 
-      try {
-        encodedResult = subtractor.eval(encodedA, encodedB);
-        decodedResult = encodedResult.decodeDouble();
-
-        double absValue = Math.abs(plainResult);
-        if(absValue == 0.0 || absValue > 1.0) {
-          tolerance = EPSILON * Math.pow(2.0, Math.getExponent(plainResult));
-        } else {
-          tolerance = EPSILON;
-        }
-
-        assertEquals(plainResult, decodedResult, tolerance);
-      } catch (DecodeException e) {
-      } catch (ArithmeticException e) {
-      }
-    }
-  }
-
-  void testDoubleSubtractionRight(BinarySubtractor4 subtractor) {
-    double a, b, plainResult, decodedResult, tolerance;
-    EncodedNumber encodedA, encodedB, encodedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
-      a = randomFiniteDouble();
-      b = randomFiniteDouble();
-
-      // Check if B and A are "close enough", otherwise there will be an undetected overflow
-      double minB = a - (a * EPSILON), maxB = a + (a * EPSILON);
-      if(b > maxB || b < minB)
-        continue;
-
-      plainResult = b - a;
-      if(Double.isInfinite(plainResult))
-        continue;
-
-      if(context.isUnsigned() && (a < 0 || b < 0 || plainResult < 0)) {
-        continue;
-      }
-
-      encodedA = context.encode(a);
-      encodedB = context.encode(b);
-
-      try {
-        encodedResult = subtractor.eval(encodedA, encodedB);
-        decodedResult = encodedResult.decodeDouble();
-
-        double absValue = Math.abs(plainResult);
-        if(absValue == 0.0 || absValue > 1.0) {
-          tolerance = EPSILON * Math.pow(2.0, Math.getExponent(decodedResult));
-        } else {
-          tolerance = EPSILON;
-        }
-
-        assertEquals(plainResult, decodedResult, tolerance);
-      } catch (DecodeException e) {
-      } catch (ArithmeticException e) {
-      }
-    }
-  }
-
-  void testLongSubtraction(BinarySubtractor4 subtractor) {
-    long a, b, plainResult, decodedResult;
-    EncodedNumber encodedA, encodedB, encodedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
-      a = random.nextLong();
-      b = random.nextLong();
-
-      plainResult = a - b;
-
-      if(context.isUnsigned() && (a < 0 || b < 0 || plainResult < 0)) {
-        continue;
-      }
-
-      encodedA = context.encode(a);
-      encodedB = context.encode(b);
-
-      try {
-        encodedResult = subtractor.eval(encodedA, encodedB);
-        decodedResult = encodedResult.decodeLong();
-
-        assertEquals(plainResult, decodedResult);
-      } catch (ArithmeticException e) {
-      } catch (DecodeException e) {
-      }
-    }
-  }
-
-  void testLongSubtractionRight(BinarySubtractor4 subtractor) {
-    long a, b, plainResult, decodedResult;
-    EncodedNumber encodedA, encodedB, encodedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
-      a = random.nextLong();
-      b = random.nextLong();
-
-      plainResult = b - a;
-
-      if(context.isUnsigned() && (a < 0 || b < 0 || plainResult < 0)) {
-        continue;
-      }
-
-      encodedA = context.encode(a);
-      encodedB = context.encode(b);
-
-      try {
-        encodedResult = subtractor.eval(encodedA, encodedB);
-        decodedResult = encodedResult.decodeLong();
-
-        assertEquals(plainResult, decodedResult);
-      } catch (ArithmeticException e) {
-      } catch (DecodeException e) {
-      }
-    }
-  }
-
-  void testBigIntegerSubtraction(BinarySubtractor4 subtractor) {
-    BigInteger a, b, plainResult, decodedResult;
-    EncodedNumber encodedA, encodedB, encodedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
-      a = new BigInteger(context.getPrecision(), random);
-      b = new BigInteger(context.getPrecision(), random);
-
-      // The random generator above only generates positive BigIntegers, the following code
-      // negates some inputs.
-      if(context.isSigned()) {
-        if(i % 4 == 1) {
-          b = b.negate();
-        } else if(i % 4 == 2) {
-          a = a.negate();
-        } else if(i % 4 == 3) {
-          a = a.negate();
-          b = b.negate();
+      for (EncryptedToEncryptedSubtractor subtractor : encryptedToEncryptedSubtractors) {
+        encryptedResult = subtractor.eval(cipherTextA, cipherTextA_obf, cipherTextB, cipherTextB_obf);
+        decryptedResult = encryptedResult.decrypt(privateKey);
+        try {
+          decodedResult = decryptedResult.decodeBigInteger();
+          assertEquals(plainResult, decodedResult);
+        } catch (DecodeException e) {
         }
       }
 
-      plainResult = a.subtract(b);
-      if(!isValid(context, a) || !isValid(context, b) || !isValid(context, plainResult))
-        continue;
-
-      encodedA = context.encode(a);
-      encodedB = context.encode(b);
-
-      try {
-        encodedResult = subtractor.eval(encodedA, encodedB);
-        decodedResult = encodedResult.decodeBigInteger();
-
-        assertEquals(plainResult, decodedResult);
-      } catch (ArithmeticException e) {
-      }
-    }
-  }
-
-  void testBigIntegerSubtractionRight(BinarySubtractor4 subtractor) {
-    BigInteger a, b, plainResult, decodedResult;
-    EncodedNumber encodedA, encodedB, encodedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
-      a = new BigInteger(context.getPrecision(), random);
-      b = new BigInteger(context.getPrecision(), random);
-
-      // The random generator above only generates positive BigIntegers, the following code
-      // negates some inputs.
-      if(context.isSigned()) {
-        if(i % 4 == 1) {
-          b = b.negate();
-        } else if(i % 4 == 2) {
-          a = a.negate();
-        } else if(i % 4 == 3) {
-          a = a.negate();
-          b = b.negate();
+      for (EncryptedToEncodedSubtractor subtractor : encryptedToEncodedSubtractors) {
+        encryptedResult = subtractor.eval(cipherTextA, cipherTextA_obf, encodedB);
+        decryptedResult = encryptedResult.decrypt(privateKey);
+        try {
+          decodedResult = decryptedResult.decodeBigInteger();
+          assertEquals(plainResult, decodedResult);
+        } catch (DecodeException e) {
         }
       }
 
-      plainResult = b.subtract(a);
-      if(!isValid(context, a) || !isValid(context, b) || !isValid(context, plainResult))
-        continue;
+      for (EncryptedToEncodedSubtractor subtractor: encodedToEncryptedSubtractors) {
+        encryptedResult = subtractor.eval(cipherTextB, cipherTextB_obf, encodedA);
+        decryptedResult = encryptedResult.decrypt(privateKey);
+        try {
+          decodedResult = decryptedResult.decodeBigInteger();
+          assertEquals(plainResult, decodedResult);
+        } catch (DecodeException e) {
+        }
+      }
 
-      encodedA = context.encode(a);
-      encodedB = context.encode(b);
-
-      try {
+      for (EncodedToEncodedSubtractor subtractor : encodedToEncodedSubtractors) {
         encodedResult = subtractor.eval(encodedA, encodedB);
-        decodedResult = encodedResult.decodeBigInteger();
-
-        assertEquals(plainResult, decodedResult);
-      } catch (ArithmeticException e) {
+        try {
+          decodedResult = encodedResult.decodeBigInteger();
+          assertEquals(plainResult, decodedResult);
+        } catch (DecodeException e) {
+        }
       }
     }
   }
-
-  @Test
-  public void testSubtractionEncryptedNumbers1() throws Exception {
-    for(BinarySubtractor1 subtractor : binarySubtractors1) {
-      testDoubleSubtraction(subtractor);
-      testLongSubtraction(subtractor);
-      testBigIntegerSubtraction(subtractor);
-    }
-
-    for(BinarySubtractor1 subtractor : binarySubtractorsRight1) {
-      testDoubleSubtractionRight(subtractor);
-      testLongSubtractionRight(subtractor);
-      testBigIntegerSubtractionRight(subtractor);
-    }
-  }
-
-  @Test
-  public void testSubtractionEncryptedNumbers2() throws Exception {
-    for(BinarySubtractor2 subtractor : binarySubtractors2) {
-      testDoubleSubtraction(subtractor);
-      testLongSubtraction(subtractor);
-      testBigIntegerSubtraction(subtractor);
-    }
-
-    for(BinarySubtractor2 subtractor : binarySubtractorsRight2) {
-      testDoubleSubtractionRight(subtractor);
-      testLongSubtractionRight(subtractor);
-      testBigIntegerSubtractionRight(subtractor);
-    }
-  }
-
-  @Test
-  public void testSubtractionEncodedNumbers1() throws Exception {
-    for(BinarySubtractor4 subtractor : binarySubtractors4) {
-      testDoubleSubtraction(subtractor);
-      testLongSubtraction(subtractor);
-      testBigIntegerSubtraction(subtractor);
-    }
-
-    for(BinarySubtractor4 subtractor : binarySubtractorsRight4) {
-      testDoubleSubtractionRight(subtractor);
-      testLongSubtractionRight(subtractor);
-      testBigIntegerSubtractionRight(subtractor);
-    }
-  }
-
 }
