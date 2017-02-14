@@ -18,6 +18,8 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import com.n1analytics.paillier.util.BigIntegerUtil;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,7 +34,7 @@ public class MultiplicationTest {
   private PaillierContext context;
   private PaillierPrivateKey privateKey;
 
-  static private int maxIteration = 100;
+  final static private int MAX_ITERATIONS = TestConfiguration.MAX_ITERATIONS;
 
   @Parameterized.Parameters
   public static Collection<Object[]> configurations() {
@@ -51,139 +53,185 @@ public class MultiplicationTest {
     privateKey = conf.privateKey();
   }
 
-  interface BinaryMultiplier1
-          extends TwoInputsFunction<EncryptedNumber, EncodedNumber, EncryptedNumber> {
+  interface EncryptedToEncodedMultiplier {
 
-    public EncryptedNumber eval(EncryptedNumber arg1, EncodedNumber arg2);
+    public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg1_obf, EncodedNumber arg2);
   }
 
-  interface BinaryMultiplier3
-          extends TwoInputsFunction<EncodedNumber, EncodedNumber, EncodedNumber> {
+  interface EncodedToEncodedMultiplier {
 
     public EncodedNumber eval(EncodedNumber arg1, EncodedNumber arg2);
   }
 
-  BinaryMultiplier1 binaryMultipliers1[] = new BinaryMultiplier1[]{new BinaryMultiplier1() {
+  EncryptedToEncodedMultiplier encryptedToEncodedMultipliers[] = new EncryptedToEncodedMultiplier[]{new EncryptedToEncodedMultiplier() {
     @Override
-    public EncryptedNumber eval(EncryptedNumber arg1, EncodedNumber arg2) {
+    public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg1_obf, EncodedNumber arg2) {
       return arg1.multiply(arg2);
     }
-  }, new BinaryMultiplier1() {
+  }, new EncryptedToEncodedMultiplier() {
     @Override
-    public EncryptedNumber eval(EncryptedNumber arg1, EncodedNumber arg2) {
+    public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg1_obf, EncodedNumber arg2) {
       return arg2.multiply(arg1);
     }
-  }, new BinaryMultiplier1() {
+  }, new EncryptedToEncodedMultiplier() {
     @Override
-    public EncryptedNumber eval(EncryptedNumber arg1, EncodedNumber arg2) {
+    public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg1_obf, EncodedNumber arg2) {
       return context.multiply(arg1, arg2);
     }
-  }, new BinaryMultiplier1() {
+  }, new EncryptedToEncodedMultiplier() {
     @Override
-    public EncryptedNumber eval(EncryptedNumber arg1, EncodedNumber arg2) {
+    public EncryptedNumber eval(EncryptedNumber arg1, EncryptedNumber arg1_obf, EncodedNumber arg2) {
       return context.multiply(arg2, arg1);
     }
   }};
 
-  BinaryMultiplier3 binaryMultipliers3[] = new BinaryMultiplier3[]{new BinaryMultiplier3() {
+  EncodedToEncodedMultiplier encodedToEncodedMultipliers[] = new EncodedToEncodedMultiplier[]{new EncodedToEncodedMultiplier() {
     @Override
     public EncodedNumber eval(EncodedNumber arg1, EncodedNumber arg2) {
       return arg1.multiply(arg2);
     }
-  }, new BinaryMultiplier3() {
+  }, new EncodedToEncodedMultiplier() {
     @Override
     public EncodedNumber eval(EncodedNumber arg1, EncodedNumber arg2) {
       return arg2.multiply(arg1);
     }
-  }, new BinaryMultiplier3() {
+  }, new EncodedToEncodedMultiplier() {
     @Override
     public EncodedNumber eval(EncodedNumber arg1, EncodedNumber arg2) {
       return context.multiply(arg1, arg2);
     }
-  }, new BinaryMultiplier3() {
+  }, new EncodedToEncodedMultiplier() {
     @Override
     public EncodedNumber eval(EncodedNumber arg1, EncodedNumber arg2) {
       return context.multiply(arg2, arg1);
     }
   }};
 
-  void testDoubleMultiplication(BinaryMultiplier1 multiplier) {
+  @Test
+  public void testDoubleMultiplication() {
     double a, b, plainResult, decodedResult, tolerance;
-    EncryptedNumber ciphertTextA, encryptedResult;
-    EncodedNumber encodedB, decryptedResult;
+    EncryptedNumber cipherTextA, cipherTextA_obf, encryptedResult;
+    EncodedNumber encodedA, encodedB, decryptedResult;
 
-    for(int i = 0; i < maxIteration; i++) {
+    for(int i = 0; i < MAX_ITERATIONS; i++) {
       a = randomFiniteDouble();
       b = randomFiniteDouble();
 
-      if(context.isUnsigned() && (a < 0 || b < 0)) {
-        continue;
+      if(context.isUnsigned()) {
+        if (a < 0) {
+          a = -a;
+        }
+        if (b < 0) {
+          b = -b;
+        }
       }
 
       plainResult = a * b;
 
-      ciphertTextA = context.encrypt(a);
+      cipherTextA = context.encrypt(a);
+      cipherTextA_obf = cipherTextA.obfuscate();
+      encodedA = context.encode(a);
       encodedB = context.encode(b);
 
-      encryptedResult = multiplier.eval(ciphertTextA, encodedB);
-      decryptedResult = encryptedResult.decrypt(privateKey);
+      for (EncryptedToEncodedMultiplier multiplier : encryptedToEncodedMultipliers) {
+        encryptedResult = multiplier.eval(cipherTextA, cipherTextA_obf, encodedB);
+        decryptedResult = encryptedResult.decrypt(privateKey);
+        try {
+          decodedResult = decryptedResult.decodeDouble();
 
-      try {
-        decodedResult = decryptedResult.decodeDouble();
-
-        double absValue = Math.abs(plainResult);
-        if(absValue == 0.0 || absValue > 1.0) {
-          tolerance = EPSILON * Math.pow(2.0, Math.getExponent(plainResult));
-        } else {
-          tolerance = EPSILON;
+          double absValue = Math.abs(plainResult);
+          if(absValue == 0.0 || absValue > 1.0) {
+            tolerance = EPSILON * Math.pow(2.0, Math.getExponent(plainResult));
+          } else {
+            tolerance = EPSILON;
+          }
+          assertEquals(plainResult, decodedResult, tolerance);
+        } catch (ArithmeticException e) {
+        } catch (DecodeException e) {
         }
+      }
+      
+      for (EncodedToEncodedMultiplier multiplier : encodedToEncodedMultipliers) {
+        decryptedResult = multiplier.eval(encodedA, encodedB);
+        try {
+          decodedResult = decryptedResult.decodeDouble();
 
-        assertEquals(plainResult, decodedResult, tolerance);
-      } catch (ArithmeticException e) {
-      } catch (DecodeException e) {
+          double absValue = Math.abs(plainResult);
+          if(absValue == 0.0 || absValue > 1.0) {
+            tolerance = EPSILON * Math.pow(2.0, Math.getExponent(plainResult));
+          } else {
+            tolerance = EPSILON;
+          }
+          assertEquals(plainResult, decodedResult, tolerance);
+        } catch (ArithmeticException e) {
+        } catch (DecodeException e) {
+        }
       }
     }
   }
 
-  void testLongMultiplication(BinaryMultiplier1 multiplier) {
+  @Test
+  public void testLongMultiplication() {
     long a, b, plainResult, decodedResult;
-    EncryptedNumber ciphertTextA, encryptedResult;
-    EncodedNumber encodedB, decryptedResult;
+    EncryptedNumber cipherTextA, cipherTextA_obf, encryptedResult;
+    EncodedNumber encodedA, encodedB, decryptedResult;
 
-    for(int i = 0; i < maxIteration; i++) {
+    for(int i = 0; i < MAX_ITERATIONS; i++) {
       a = random.nextLong();
       b = random.nextLong();
 
-      if(context.isUnsigned() && (a < 0 || b < 0)) {
-        continue;
+      if(context.isUnsigned()) {
+        if (a < 0) {
+          a = -a;
+        }
+        if (b < 0) {
+          b = -b;
+        }
       }
 
       plainResult = a * b;
 
-      ciphertTextA = context.encrypt(a);
+      cipherTextA = context.encrypt(a);
+      cipherTextA_obf = cipherTextA.obfuscate();
       encodedB = context.encode(b);
+      encodedA = context.encode(a);
 
-      encryptedResult = multiplier.eval(ciphertTextA, encodedB);
-      decryptedResult = encryptedResult.decrypt(privateKey);
-
-      try {
-        decodedResult = decryptedResult.decodeLong();
-
-        assertEquals(plainResult, decodedResult);
-      } catch (ArithmeticException e) {
-      } catch (DecodeException e) {
+      for (EncryptedToEncodedMultiplier multiplier : encryptedToEncodedMultipliers) {
+        encryptedResult = multiplier.eval(cipherTextA, cipherTextA_obf, encodedB);
+        decryptedResult = encryptedResult.decrypt(privateKey);
+        try {
+          decodedResult = decryptedResult.decodeLong();
+          assertEquals(plainResult, decodedResult);
+        } catch (ArithmeticException e) {
+        } catch (DecodeException e) {
+        }
+      }
+      for (EncodedToEncodedMultiplier multiplier : encodedToEncodedMultipliers) {
+        decryptedResult = multiplier.eval(encodedA, encodedB);
+        try {
+          decodedResult = decryptedResult.decodeLong();
+          assertEquals(plainResult, decodedResult);
+        } catch (ArithmeticException e) {
+        } catch (DecodeException e) {
+        }
       }
     }
   }
 
-  void testBigIntegerMultiplication(BinaryMultiplier1 multiplier) {
+  @Test
+  public void testBigIntegerMultiplication() {
     BigInteger a, b, plainResult, decodedResult;
-    EncryptedNumber ciphertTextA, encryptedResult;
-    EncodedNumber encodedB, decryptedResult;
+    EncryptedNumber cipherTextA, cipherTextA_obf, encryptedResult;
+    EncodedNumber encodedA, encodedB, decryptedResult;
 
-    for(int i = 0; i < maxIteration; i++) {
-      a = new BigInteger(context.getPrecision(), random);
-      b = new BigInteger(context.getPrecision(), random);
+    for(int i = 0; i < MAX_ITERATIONS; i++) {
+      do {
+        a = new BigInteger(context.getPrecision(), random);
+      } while(BigIntegerUtil.greater(a, context.getMaxSignificand()) || BigIntegerUtil.less(a, context.getMinSignificand()));
+      do {
+        b = new BigInteger(context.getPrecision(), random);
+      } while(BigIntegerUtil.greater(b, context.getMaxSignificand()) || BigIntegerUtil.less(b, context.getMinSignificand()));
+
 
       // The random generator above only generates positive BigIntegers, the following code
       // negates some inputs.
@@ -199,143 +247,36 @@ public class MultiplicationTest {
       }
 
       plainResult = a.multiply(b);
-      if(!isValid(context, a) || !isValid(context, b) || !isValid(context, plainResult))
-        continue;
+      while(!isValid(context, plainResult)) {
+        b = b.shiftRight(1);
+        plainResult = a.multiply(b);
+      }
 
-      ciphertTextA = context.encrypt(a);
+      cipherTextA = context.encrypt(a);
+      cipherTextA_obf = cipherTextA.obfuscate();
       encodedB = context.encode(b);
+      encodedA = context.encode(a);
 
-      encryptedResult = multiplier.eval(ciphertTextA, encodedB);
-      decryptedResult = encryptedResult.decrypt(privateKey);
-
-      try {
-        decodedResult = decryptedResult.decodeBigInteger();
-
-        assertEquals(plainResult, decodedResult);
-      } catch (ArithmeticException e) {
-      }
-    }
-  }
-
-  void testDoubleMultiplication(BinaryMultiplier3 multiplier) {
-    double a, b, plainResult, decodedResult, tolerance;
-    EncodedNumber encodedNumberA, encodedNumberB, encodedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
-      a = randomFiniteDouble();
-      b = randomFiniteDouble();
-
-      if(context.isUnsigned() && (a < 0 || b < 0)) {
-        continue;
-      }
-
-      plainResult = a * b;
-
-      encodedNumberA = context.encode(a);
-      encodedNumberB = context.encode(b);
-
-      encodedResult = multiplier.eval(encodedNumberA, encodedNumberB);
-
-      try {
-        decodedResult = encodedResult.decodeDouble();
-
-        double absValue = Math.abs(plainResult);
-        if(absValue == 0.0 || absValue > 1.0) {
-          tolerance = EPSILON * Math.pow(2.0, Math.getExponent(plainResult));
-        } else {
-          tolerance = EPSILON;
-        }
-
-        assertEquals(plainResult, decodedResult, tolerance);
-      } catch (ArithmeticException e) {
-      } catch (DecodeException e) {
-      }
-    }
-  }
-
-  void testLongMultiplication(BinaryMultiplier3 multiplier) {
-    long a, b, plainResult, decodedResult;
-    EncodedNumber encodedNumberA, encodedNumberB, encodedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
-      a = random.nextLong();
-      b = random.nextLong();
-
-      if(context.isUnsigned() && (a < 0 || b < 0)) {
-        continue;
-      }
-
-      plainResult = a * b;
-
-      encodedNumberA = context.encode(a);
-      encodedNumberB = context.encode(b);
-
-      encodedResult = multiplier.eval(encodedNumberA, encodedNumberB);
-
-      try {
-        decodedResult = encodedResult.decodeLong();
-
-        assertEquals(plainResult, decodedResult);
-      } catch (ArithmeticException e) {
-      } catch (DecodeException e) {
-      }
-    }
-  }
-
-  void testBigIntegerMultiplication(BinaryMultiplier3 multiplier) {
-    BigInteger a, b, plainResult, decodedResult;
-    EncodedNumber encodedNumberA, encodedNumberB, encodedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
-      a = new BigInteger(context.getPrecision(), random);
-      b = new BigInteger(context.getPrecision(), random);
-
-      // The random generator above only generates positive BigIntegers, the following code
-      // negates some inputs.
-      if(context.isSigned()) {
-        if(i % 4 == 1) {
-          b = b.negate();
-        } else if(i % 4 == 2) {
-          a = a.negate();
-        } else if(i % 4 == 3) {
-          a = a.negate();
-          b = b.negate();
+      for (EncryptedToEncodedMultiplier multiplier : encryptedToEncodedMultipliers) {
+        encryptedResult = multiplier.eval(cipherTextA, cipherTextA_obf, encodedB);
+        decryptedResult = encryptedResult.decrypt(privateKey);
+        try {
+          decodedResult = decryptedResult.decodeBigInteger();
+          assertEquals(plainResult, decodedResult);
+        } catch (ArithmeticException e) {
+        } catch (DecodeException e) {
         }
       }
-
-      plainResult = a.multiply(b);
-      if(!isValid(context, a) || !isValid(context, b) || !isValid(context, plainResult))
-        continue;
-
-      encodedNumberA = context.encode(a);
-      encodedNumberB = context.encode(b);
-
-      encodedResult = multiplier.eval(encodedNumberA, encodedNumberB);
-
-      try {
-        decodedResult = encodedResult.decodeBigInteger();
-
-        assertEquals(plainResult, decodedResult);
-      } catch (ArithmeticException e) {
+      for (EncodedToEncodedMultiplier multiplier : encodedToEncodedMultipliers) {
+        decryptedResult = multiplier.eval(encodedA, encodedB);
+        try {
+          decodedResult = decryptedResult.decodeBigInteger();
+          assertEquals(plainResult, decodedResult);
+        } catch (ArithmeticException e) {
+        } catch (DecodeException e) {
+        }
       }
     }
   }
 
-  @Test
-  public void testMultiplicationEncryptedNumbers1() throws Exception {
-    for(BinaryMultiplier1 multiplier : binaryMultipliers1) {
-      testDoubleMultiplication(multiplier);
-      testLongMultiplication(multiplier);
-      testBigIntegerMultiplication(multiplier);
-    }
-  }
-
-  @Test
-  public void testMultiplicationEncryptedNumbers3() throws Exception {
-    for(BinaryMultiplier3 multiplier : binaryMultipliers3) {
-      testDoubleMultiplication(multiplier);
-      testLongMultiplication(multiplier);
-      testBigIntegerMultiplication(multiplier);
-    }
-  }
 }

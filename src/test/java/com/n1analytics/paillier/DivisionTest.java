@@ -33,7 +33,7 @@ public class DivisionTest {
   private PaillierContext context;
   private PaillierPrivateKey privateKey;
 
-  static private int maxIteration = 100;
+  static private int maxIteration = TestConfiguration.MAX_ITERATIONS;
 
   @Parameters
   public static Collection<Object[]> configurations() {
@@ -61,8 +61,13 @@ public class DivisionTest {
       a = randomFiniteDouble();
       b = randomFiniteDouble();
 
-      if(context.isUnsigned() && (a < 0 || b < 0)) {
-        continue;
+      if(context.isUnsigned()) {
+       if (a < 0) {
+         a = -a;
+       }
+       if (b < 0) {
+         b = -b;
+       }
       }
 
       invertedB = 1 / b;
@@ -103,9 +108,14 @@ public class DivisionTest {
       a = randomFiniteDouble();
       b = random.nextLong();
 
-      if(context.isUnsigned() && (a < 0 || b < 0)) {
-        continue;
-      }
+      if(context.isUnsigned()) {
+        if (a < 0) {
+          a = -a;
+        }
+        if (b < 0) {
+          b = -b;
+        }
+       }
 
       invertedB = 1 / (double) b;
       if(Double.isInfinite(invertedB)) {
@@ -144,9 +154,14 @@ public class DivisionTest {
       a = randomFiniteDouble();
       b = randomFiniteDouble();
 
-      if(context.isUnsigned() && (a < 0 || b < 0)) {
-        continue;
-      }
+      if(context.isUnsigned()) {
+        if (a < 0) {
+          a = -a;
+        }
+        if (b < 0) {
+          b = -b;
+        }
+       }
 
       invertedB = 1 / b;
       if(Double.isInfinite(invertedB)) {
@@ -186,9 +201,14 @@ public class DivisionTest {
       a = randomFiniteDouble();
       b = random.nextLong();
 
-      if(context.isUnsigned() && (a < 0 || b < 0)) {
-        continue;
-      }
+      if(context.isUnsigned()) {
+        if (a < 0) {
+          a = -a;
+        }
+        if (b < 0) {
+          b = -b;
+        }
+       }
 
       invertedB = 1 / (double) b;
       if(Double.isInfinite(invertedB)) {

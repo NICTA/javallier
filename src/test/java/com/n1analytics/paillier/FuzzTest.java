@@ -21,6 +21,7 @@ import org.junit.runners.Parameterized;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Random;
 
 import static com.n1analytics.paillier.TestConfiguration.CONFIGURATIONS;
 import static com.n1analytics.paillier.TestUtil.*;
@@ -31,8 +32,9 @@ import static org.junit.Assert.assertEquals;
 public class FuzzTest {
   private PaillierContext context;
   private PaillierPrivateKey privateKey;
+  Random rnd;
 
-  static private int maxIteration = 100;
+  static private int maxIteration = TestConfiguration.MAX_ITERATIONS;
 
   @Parameterized.Parameters
   public static Collection<Object[]> configurations() {
@@ -49,6 +51,7 @@ public class FuzzTest {
   public FuzzTest(TestConfiguration conf) {
     context = conf.context();
     privateKey = conf.privateKey();
+    rnd = new Random();
   }
 
   @Test
@@ -58,22 +61,25 @@ public class FuzzTest {
 
     for(int i = 0; i < maxIteration; i++) {
       a = randomFiniteDouble();
-      b = randomFiniteDouble();
-      c = randomFiniteDouble();
+      double maxDist = a * EPSILON;
+      b = a + (rnd.nextDouble() - 0.5) * 2 * maxDist;
+      c = a + (rnd.nextDouble() - 0.5) * 2 * maxDist;
 
-      // Check if the numbers are "close enough"
-      double minVal = a - (a * EPSILON), maxVal = a + (a * EPSILON);
-      if((b > maxVal || b < minVal) && (c > maxVal || c < minVal))
-        continue;
-
+      if(context.isUnsigned()) {
+        if (a < 0) {
+          a = -a;
+        }
+        if (b < 0) {
+          b = -b;
+        }
+        if (c < 0) {
+          c = -c;
+        }
+      }
       plainResult = (a + b) * c;
 
-      if(context.isUnsigned() && (a < 0 || b < 0 || c < 0 || plainResult < 0)) {
-        continue;
-      }
-
-      ciphertextA = context.encrypt(a);
-      ciphertextB = context.encrypt(b);
+      ciphertextA = context.encrypt(a).obfuscate();
+      ciphertextB = context.encrypt(b).obfuscate();
 
       encryptedResult = (ciphertextA.add(ciphertextB)).multiply(c);
 
@@ -101,22 +107,28 @@ public class FuzzTest {
 
     for(int i = 0; i < maxIteration; i++) {
       a = randomFiniteDouble();
-      b = randomFiniteDouble();
-      c = randomFiniteDouble();
+      double maxDist = a * EPSILON;
+      b = (rnd.nextDouble() - 0.5) * 100; //has to be small to prevent overflows
+      c = a + (rnd.nextDouble() - 0.5) * 2 * maxDist;
 
-      // Check if the numbers are "close enough"
-      double minVal = a - (a * EPSILON), maxVal = a + (a * EPSILON);
-      if((b > maxVal || b < minVal) && (c > maxVal || c < minVal))
-        continue;
-
+      if(context.isUnsigned()) {
+        if (a < 0) {
+          a = -a;
+        }
+        if (b < 0) {
+          b = -b;
+        }
+        if (c < 0) {
+          c = -c;
+        }
+      }
       plainResult = a * b + c;
-
-      if(context.isUnsigned() && (a < 0 || b < 0 || c < 0 || plainResult < 0)) {
+      if (!Double.isFinite(plainResult)) {
         continue;
       }
 
-      ciphertextA = context.encrypt(a);
-      ciphertextC = context.encrypt(c);
+      ciphertextA = context.encrypt(a).obfuscate();
+      ciphertextC = context.encrypt(c).obfuscate();
 
       encryptedResult = ciphertextA.multiply(b).add(ciphertextC);
 
@@ -143,25 +155,32 @@ public class FuzzTest {
     EncryptedNumber ciphertextA, ciphertextB, encryptedResult;
     EncodedNumber encodedC, encodedD;
 
-    for(int i = 0; i < maxIteration; i++) {
+    for (int i = 0; i < maxIteration; i++) {
       a = randomFiniteDouble();
-      b = randomFiniteDouble();
-      c = randomFiniteDouble();
-      d = randomFiniteDouble();
+      double maxDist = a * EPSILON;
+      b = (rnd.nextDouble() - 0.5) * 100; //has to be small to prevent overflows
+      c = a + (rnd.nextDouble() - 0.5) * 2 * maxDist;
+      d = a + (rnd.nextDouble() - 0.5) * 2 * maxDist;
 
-      // Check if the numbers are "close enough"
-      double minVal = a - (a * EPSILON), maxVal = a + (a * EPSILON);
-      if((b > maxVal || b < minVal) && (c > maxVal || c < minVal) && (d > maxVal || d < minVal))
-        continue;
+      if (context.isUnsigned()) {
+        if (a < 0) {
+          a = -a;
+        }
+        if (b < 0) {
+          b = -b;
+        }
+        if (c < 0) {
+          c = -c;
+        }
+        if (d < 0) {
+          d = -d;
+        }
+      }
 
       plainResult = a + b * (c + d);
 
-      if(context.isUnsigned() && (a < 0 || b < 0 || c < 0 || d < 0 || plainResult < 0)) {
-        continue;
-      }
-
-      ciphertextA = context.encrypt(a);
-      ciphertextB = context.encrypt(b);
+      ciphertextA = context.encrypt(a).obfuscate();
+      ciphertextB = context.encrypt(b).obfuscate();
       encodedC = context.encode(c);
       encodedD = context.encode(d);
 
@@ -192,14 +211,25 @@ public class FuzzTest {
 
     for(int i = 0; i < maxIteration; i++) {
       a = randomFiniteDouble();
-      b = randomFiniteDouble();
-      c = randomFiniteDouble();
-      d = randomFiniteDouble();
+      double maxDist = a * EPSILON;
+      b = a + (rnd.nextDouble() - 0.5) * 2 * maxDist;
+      c = (rnd.nextDouble() - 0.5) * 100; //has to be small to prevent overflows
+      d = a + (rnd.nextDouble() - 0.5) * 2 * maxDist;
 
-      // Check if the numbers are "close enough"
-      double minVal = a - (a * EPSILON), maxVal = a + (a * EPSILON);
-      if((b > maxVal || b < minVal) && (c > maxVal || c < minVal))
-        continue;
+      if (context.isUnsigned()) {
+        if (a < 0) {
+          a = -a;
+        }
+        if (b < 0) {
+          b = -b;
+        }
+        if (c < 0) {
+          c = -c;
+        }
+        if (d < 0) {
+          d = -d;
+        }
+      }
 
       if(Double.isInfinite(1 / d) || Double.isNaN(1/d)) {
         continue;
@@ -207,12 +237,8 @@ public class FuzzTest {
 
       plainResult = (a + (b * c)) / d;
 
-      if(context.isUnsigned() && (a < 0 || b < 0 || c < 0 || d < 0 || plainResult < 0)) {
-        continue;
-      }
-
-      ciphertextA = context.encrypt(a);
-      ciphertextB = context.encrypt(b);
+      ciphertextA = context.encrypt(a).obfuscate();
+      ciphertextB = context.encrypt(b).obfuscate();
       encodedC = context.encode(c);
 
       encryptedResult = ciphertextA.add(ciphertextB.multiply(encodedC)).divide(d);
@@ -241,23 +267,27 @@ public class FuzzTest {
 
     for(int i = 0; i < maxIteration; i++) {
       a = randomFiniteDouble();
-      b = randomFiniteDouble();
-      c = randomFiniteDouble();
+      double maxDist = a * EPSILON;
+      b = a + (rnd.nextDouble() - 0.5) * 2 * maxDist;
+      c = a + (rnd.nextDouble() - 0.5) * 2 * maxDist;
 
-      // Check if the numbers are "close enough"
-      double minVal = a - (a * EPSILON), maxVal = a + (a * EPSILON);
-      if((b > maxVal || b < minVal) && (c > maxVal || c < minVal))
-        continue;
+      if(context.isUnsigned()) {
+        if (a < 0) {
+          a = -a;
+        }
+        if (b < 0) {
+          b = -b;
+        }
+        if (c < 0) {
+          c = -c;
+        }
+      }
 
       plainResult = a + b + c;
 
-      if(context.isUnsigned() && (a < 0 || b < 0 || c < 0 || plainResult < 0)) {
-        continue;
-      }
-
-      ciphertextA = context.encrypt(a);
-      ciphertextB = context.encrypt(b);
-      ciphertextC = context.encrypt(c);
+      ciphertextA = context.encrypt(a).obfuscate();
+      ciphertextB = context.encrypt(b).obfuscate();
+      ciphertextC = context.encrypt(c).obfuscate();
 
       encryptedResult = ciphertextA.add(ciphertextB).add(ciphertextC);
 
@@ -285,21 +315,25 @@ public class FuzzTest {
 
     for(int i = 0; i < maxIteration; i++) {
       a = randomFiniteDouble();
-      b = randomFiniteDouble();
-      c = randomFiniteDouble();
+      double maxDist = a * EPSILON;
+      b = a + (rnd.nextDouble() - 0.5) * 2 * maxDist;
+      c = a + (rnd.nextDouble() - 0.5) * 2 * maxDist;
 
-      // Check if the numbers are "close enough"
-      double minVal = a - (a * EPSILON), maxVal = a + (a * EPSILON);
-      if((b > maxVal || b < minVal) && (c > maxVal || c < minVal))
-        continue;
+      if(context.isUnsigned()) {
+        if (a < 0) {
+          a = -a;
+        }
+        if (b < 0) {
+          b = -b;
+        }
+        if (c < 0) {
+          c = -c;
+        }
+      }
 
       plainResult = a * b * c;
 
-      if(context.isUnsigned() && (a < 0 || b < 0 || c < 0 || plainResult < 0)) {
-        continue;
-      }
-
-      ciphertextA = context.encrypt(a);
+      ciphertextA = context.encrypt(a).obfuscate();
 
       encryptedResult = ciphertextA.multiply(b).multiply(c);
 
@@ -330,14 +364,22 @@ public class FuzzTest {
       b = random.nextLong();
       c = random.nextLong();
 
+      if (context.isUnsigned()) {
+        if (a < 0) {
+          a = -a;
+        }
+        if (b < 0) {
+          b = -b;
+        }
+        if (c < 0) {
+          c = -c;
+        }
+      }
+      
       plainResult = (a + b) * c;
 
-      if(context.isUnsigned() && (a < 0 || b < 0 || c < 0 || plainResult < 0)) {
-        continue;
-      }
-
-      ciphertextA = context.encrypt(a);
-      ciphertextB = context.encrypt(b);
+      ciphertextA = context.encrypt(a).obfuscate();
+      ciphertextB = context.encrypt(b).obfuscate();
 
       encryptedResult = (ciphertextA.add(ciphertextB)).multiply(c);
 
@@ -362,8 +404,16 @@ public class FuzzTest {
 
       plainResult = a * b + c;
 
-      if(context.isUnsigned() && (a < 0 || b < 0 || c < 0 || plainResult < 0)) {
-        continue;
+      if (context.isUnsigned()) {
+        if (a < 0) {
+          a = -a;
+        }
+        if (b < 0) {
+          b = -b;
+        }
+        if (c < 0) {
+          c = -c;
+        }
       }
 
       ciphertextA = context.encrypt(a);
@@ -394,15 +444,26 @@ public class FuzzTest {
 
       plainResult = a + b * (c + d);
 
-      if(context.isUnsigned() && (a < 0 || b < 0 || c < 0 || d < 0 || plainResult < 0)) {
-        continue;
+      if (context.isUnsigned()) {
+        if (a < 0) {
+          a = -a;
+        }
+        if (b < 0) {
+          b = -b;
+        }
+        if (c < 0) {
+          c = -c;
+        }
+        if (d < 0) {
+          d = -d;
+        }
       }
 
 //      if(!isValid(context, BigInteger.valueOf(c + d)))
 //        continue;
 
       ciphertextA = context.encrypt(a);
-      ciphertextB = context.encrypt(b);
+      ciphertextB = context.encrypt(b).obfuscate();
       encodedC = context.encode(c);
       encodedD = context.encode(d);
 
@@ -427,15 +488,23 @@ public class FuzzTest {
       b = random.nextLong();
       c = random.nextLong();
 
+      if (context.isUnsigned()) {
+        if (a < 0) {
+          a = -a;
+        }
+        if (b < 0) {
+          b = -b;
+        }
+        if (c < 0) {
+          c = -c;
+        }
+      }
+      
       plainResult = a + b + c;
 
-      if(context.isUnsigned() && (a < 0 || b < 0 || c < 0 || plainResult < 0)) {
-        continue;
-      }
-
-      ciphertextA = context.encrypt(a);
-      ciphertextB = context.encrypt(b);
-      ciphertextC = context.encrypt(c);
+      ciphertextA = context.encrypt(a).obfuscate();
+      ciphertextB = context.encrypt(b).obfuscate();
+      ciphertextC = context.encrypt(c).obfuscate();
 
       encryptedResult = ciphertextA.add(ciphertextB).add(ciphertextC);
 
@@ -460,11 +529,19 @@ public class FuzzTest {
 
       plainResult = a * b * c;
 
-      if(context.isUnsigned() && (a < 0 || b < 0 || c < 0 || plainResult < 0)) {
-        continue;
+      if (context.isUnsigned()) {
+        if (a < 0) {
+          a = -a;
+        }
+        if (b < 0) {
+          b = -b;
+        }
+        if (c < 0) {
+          c = -c;
+        }
       }
 
-      ciphertextA = context.encrypt(a);
+      ciphertextA = context.encrypt(a).obfuscate();
 
       encryptedResult = ciphertextA.multiply(b).multiply(c);
 

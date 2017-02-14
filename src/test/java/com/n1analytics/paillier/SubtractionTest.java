@@ -22,6 +22,7 @@ import org.junit.runners.Parameterized;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Random;
 
 import static com.n1analytics.paillier.TestConfiguration.CONFIGURATIONS;
 import static com.n1analytics.paillier.TestUtil.*;
@@ -33,7 +34,7 @@ public class SubtractionTest {
   private PaillierContext context;
   private PaillierPrivateKey privateKey;
 
-  static private int maxIteration = TestConfiguration.MAX_ITERATIONS;
+  static final private int MAX_ITERATIONS = TestConfiguration.MAX_ITERATIONS;
 
   @Parameterized.Parameters
   public static Collection<Object[]> configurations() {
@@ -129,22 +130,7 @@ public class SubtractionTest {
                                         EncryptedNumber arg2_nonObfuscated, EncryptedNumber arg2_obfuscated) {
               return context.subtract(arg1_obfuscated, arg2_nonObfuscated);
             }
-          },
-          new EncryptedToEncryptedSubtractor() {
-            @Override
-            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
-                                        EncryptedNumber arg2_nonObfuscated, EncryptedNumber arg2_obfuscated) {
-              return arg1_obfuscated.subtract(arg2_nonObfuscated);
-            }
-          },
-          new EncryptedToEncryptedSubtractor() {
-            @Override
-            public EncryptedNumber eval(EncryptedNumber arg1_nonObfuscated, EncryptedNumber arg1_obfuscated,
-                                        EncryptedNumber arg2_nonObfuscated, EncryptedNumber arg2_obfuscated) {
-              return context.subtract(arg1_obfuscated, arg2_nonObfuscated);
-            }
           }
-
   };
 
   /**
@@ -244,30 +230,39 @@ public class SubtractionTest {
     double a, b, plainResult, decodedResult, tolerance;
     EncryptedNumber cipherTextA, cipherTextA_obf, cipherTextB, cipherTextB_obf, encryptedResult;
     EncodedNumber encodedA, encodedB, encodedResult, decryptedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
+    Random rnd = new Random();
+    int maxExponentDiff = (int)(0.5 * context.getPublicKey().getModulus().bitLength() / (Math.log(context.getBase()) / Math.log(2)));
+    for(int i = 0; i < MAX_ITERATIONS; i++) {
       a = randomFiniteDouble();
       b = randomFiniteDouble();
-
-      // Check if B and A are "close enough", otherwise there will be an undetected overflow
-      double minB = a - (a * EPSILON), maxB = a + (a * EPSILON);
-      if(b > maxB || b < minB) {
-        continue;
+      if(context.isUnsigned()) {
+        if (a < 0) {
+          a = -a;
+        }
+        if (b < 0) {
+          b = -b;
+        }
+        if (a < b) {
+          double tmp = a;
+          a = b;
+          b = tmp;
+        }
       }
-
+      encodedA = context.encode(a);
+      encodedB = context.encode(b);
+      //check for overflows
+      if (Math.abs(encodedA.exponent - encodedB.exponent) > maxExponentDiff) {
+        int newExp = encodedA.exponent - (int)Math.round((rnd.nextDouble()) * maxExponentDiff);
+        encodedB = new EncodedNumber(context, encodedB.value, newExp);
+      }
+      b = encodedB.decodeDouble();
+      encodedB = context.encode(b);
       plainResult = a - b;
-
-      if(context.isUnsigned() && (a < 0 || b < 0 || plainResult < 0)) {
-        continue;
-      }
-
+      
       cipherTextA = context.encrypt(a);
       cipherTextB = context.encrypt(b);
       cipherTextA_obf = cipherTextA.obfuscate();
       cipherTextB_obf = cipherTextB.obfuscate();
-      encodedA = context.encode(a);
-      encodedB = context.encode(b);
-
       double absValue = Math.abs(plainResult);
       if (absValue == 0.0 || absValue > 1.0) {
         tolerance = EPSILON * Math.pow(2.0, Math.getExponent(plainResult));
@@ -294,7 +289,6 @@ public class SubtractionTest {
           assertEquals(plainResult, decodedResult, tolerance);
         } catch (ArithmeticException e) {
         } catch (DecodeException e) {
-          System.out.println("DecodeException thrown");
         }
       }
 
@@ -327,16 +321,21 @@ public class SubtractionTest {
     EncryptedNumber cipherTextA, cipherTextA_obf, cipherTextB, cipherTextB_obf, encryptedResult;
     EncodedNumber encodedA, encodedB, encodedResult, decryptedResult;
 
-    for(int i = 0; i < maxIteration; i++) {
+    for(int i = 0; i < MAX_ITERATIONS; i++) {
       a = random.nextLong();
       b = random.nextLong();
 
-      if(context.isUnsigned() && (a < 0 || b < 0)) {
+      if(context.isUnsigned()) {
         if (a < 0) {
           a = -a;
         }
         if (b < 0) {
           b = -b;
+        }
+        if (a < b) {
+          long tmp = a;
+          a = b;
+          b = tmp;
         }
       }
 
@@ -395,16 +394,13 @@ public class SubtractionTest {
     BigInteger a, b, plainResult, decodedResult;
     EncryptedNumber cipherTextA, cipherTextA_obf, cipherTextB, cipherTextB_obf, encryptedResult;
     EncodedNumber encodedA, encodedB, encodedResult, decryptedResult;
-
-    for(int i = 0; i < maxIteration; i++) {
-      a = new BigInteger(context.getPrecision(), random);
-      b = new BigInteger(context.getPrecision(), random);
-
-      if(BigIntegerUtil.greater(a, context.getMaxSignificand()) || BigIntegerUtil.less(a, context.getMinSignificand()))
-        continue;
-
-      if(BigIntegerUtil.greater(b, context.getMaxSignificand()) || BigIntegerUtil.less(b, context.getMinSignificand()))
-        continue;
+    for(int i = 0; i < MAX_ITERATIONS; i++) {
+      do {
+        a = new BigInteger(context.getPrecision(), random);
+      } while(BigIntegerUtil.greater(a, context.getMaxSignificand()) || BigIntegerUtil.less(a, context.getMinSignificand()));
+      do {
+        b = new BigInteger(context.getPrecision(), random);
+      } while(BigIntegerUtil.greater(b, context.getMaxSignificand()) || BigIntegerUtil.less(b, context.getMinSignificand()));
 
       // The random generator above only generates positive BigIntegers, the following code
       // negates some inputs.
@@ -417,11 +413,19 @@ public class SubtractionTest {
           a = a.negate();
           b = b.negate();
         }
+      } else {
+        if (a.compareTo(b) == -1) {
+          BigInteger tmp = a;
+          a = b;
+          b = tmp;
+        }
       }
 
       plainResult = a.subtract(b);
-      if(!isValid(context, plainResult))
-        continue;
+      while (!isValid(context, plainResult)) {
+        b = b.shiftRight(1);
+        plainResult = a.subtract(b);
+      }
 
       cipherTextA = context.encrypt(a);
       cipherTextB = context.encrypt(b);
