@@ -123,7 +123,7 @@ public class FuzzTest {
         }
       }
       plainResult = a * b + c;
-      if (!Double.isFinite(plainResult)) {
+      if (Double.isInfinite(plainResult)) {
         continue;
       }
 
