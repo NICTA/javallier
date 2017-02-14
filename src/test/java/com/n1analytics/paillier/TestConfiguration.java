@@ -45,7 +45,7 @@ public class TestConfiguration {
 //      PRIVATE_KEY_DOUBLE, true, 1 + DOUBLE_MAX_PRECISION);
 
   // the maximum number of iterations for randomized tests. 
-  public static final int MAX_ITERATIONS = 50;
+  public static final int MAX_ITERATIONS = 40;
   
   public static final PaillierPrivateKey PRIVATE_KEY_512 = PaillierPrivateKey
       .create(512);
