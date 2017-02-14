@@ -231,7 +231,7 @@ public class SubtractionTest {
     EncryptedNumber cipherTextA, cipherTextA_obf, cipherTextB, cipherTextB_obf, encryptedResult;
     EncodedNumber encodedA, encodedB, encodedResult, decryptedResult;
     Random rnd = new Random();
-    int maxExponentDiff = (int)(0.5 * context.getPublicKey().getModulus().bitLength() / (Math.log(context.getBase()) / Math.log(2)));
+    int maxExponentDiff = (int)(0.5 * context.getMaxEncoded().bitLength() / (Math.log(context.getBase()) / Math.log(2)) - (Math.ceil(Math.log(1<<53) / Math.log(context.getBase()))));
     for(int i = 0; i < MAX_ITERATIONS; i++) {
       a = randomFiniteDouble();
       b = randomFiniteDouble();
