@@ -256,7 +256,16 @@ public class SubtractionTest {
         encodedB = new EncodedNumber(context, encodedB.value, newExp);
       }
       b = encodedB.decodeDouble();
+      if(context.isUnsigned()) { //now that we changed b, we have to check again if a < b
+        if (a < b) {
+          double tmp = a;
+          a = b;
+          b = tmp;
+          encodedA = context.encode(a);
+        }
+      }
       encodedB = context.encode(b);
+      
       plainResult = a - b;
       
       cipherTextA = context.encrypt(a);
