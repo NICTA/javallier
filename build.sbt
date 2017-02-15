@@ -15,7 +15,7 @@ lazy val root = project.in(file(".")).
   settings(commonSettings: _*)
   .settings(
     name := "javallier",
-    version := "0.5.3",
+    version := "0.6.0",
     description := "A Java library for Paillier partially homomorphic encryption.",
     libraryDependencies ++= Seq(
       "ch.qos.logback" % "logback-classic" % "1.0.13",
@@ -47,24 +47,21 @@ publishTo := {
 
 pomExtra := (
   <scm>
-    <url>git@github.com:NICTA/javallier.git</url>
+    <url>git@github.com:n1analytics/javallier.git</url>
     <connection>scm:git:git@github.com:NICTA/javallier.git</connection>
   </scm>
   <developers>
     <developer>
       <id>mpnd</id>
       <name>Mentari Djatmiko</name>
-      <url>https://www.nicta.com.au/people/mDjatmiko/</url>
     </developer>
     <developer>
       <id>maxott</id>
       <name>Max Ott</name>
-      <url>https://www.nicta.com.au/people/mott/</url>
     </developer>
     <developer>
       <id>hardbyte</id>
       <name>Brian Thorne</name>
-      <url>https://www.nicta.com.au/people/bthorne/</url>
     </developer>
     <developer>
       <id>wilko77</id>

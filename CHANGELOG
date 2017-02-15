@@ -1,3 +1,15 @@
+# Version 0.6.0 (2017-02-15)
+
+Release mostly concentrated on speed ups.
+
+- PR49: When creating a BigInteger from an array of bytes, needs to provide the signum
+- PR50: Travis CI will now test the command line tool
+- PR51: Use reduce exponent trick from python-paillier.
+- PR52: Use GMP for modexp in more places.
+- PR53: Improvement to tests
+
+Note the github repository has moved from NICTA to N1Analytics.
+
 # Version 0.5.3 (2017-02-02)
 
 - Fix bug where command line utility produced invalid jwk encodings

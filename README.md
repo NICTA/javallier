@@ -1,6 +1,4 @@
-[![Build Status](https://travis-ci.org/n1analytics/javallier.svg?branch=master)](https://travis-ci.org/n1analytics/javallier)
-
-[![Javadocs](https://www.javadoc.io/badge/com.n1analytics/javallier_2.10.svg)](https://www.javadoc.io/doc/com.n1analytics/javallier_2.10)
+[![Build Status](https://travis-ci.org/n1analytics/javallier.svg?branch=master)](https://travis-ci.org/n1analytics/javallier) [![Javadocs](https://www.javadoc.io/badge/com.n1analytics/javallier_2.10.svg)](https://www.javadoc.io/doc/com.n1analytics/javallier_2.10)
 
 # javallier
 
@@ -16,7 +14,7 @@ The homomorphic properties of the paillier cryptosystem are:
 
 To use the library add the following dependency to your SBT configuration:
 
-    libraryDependencies += "com.n1analytics" % "javallier_2.10" % "0.5.2"
+    libraryDependencies += "com.n1analytics" % "javallier_2.10" % "0.6.0"
 
 
 Example usages are provided in the `/examples` source directory. A 
