@@ -48,7 +48,7 @@ publishTo := {
 pomExtra := (
   <scm>
     <url>git@github.com:n1analytics/javallier.git</url>
-    <connection>scm:git:git@github.com:NICTA/javallier.git</connection>
+    <connection>scm:git:git@github.com:n1analytics/javallier.git</connection>
   </scm>
   <developers>
     <developer>
