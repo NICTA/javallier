@@ -416,4 +416,30 @@ public final class EncryptedNumber {
             context.equals(o.context) &&
             ciphertext.equals(o.ciphertext));
   }
+
+  /**
+   * Return a byte array representing the underlying ciphertext.
+   *
+   * WARNING: This method may return unencrypted information! Under no
+   * circumstances should the return value be sent anywhere.
+   *
+   * WARNING: This method is not intended for general use and may be
+   * removed in a future release. Think twice before using it. In
+   * almost all circumstances you should use calculateCiphertext()
+   * instead.
+   */
+  public byte[] toByteArrayUnsafe() {
+    return ciphertext.toByteArray();
+  }
+
+  /**
+   * Return true or false according to whether this EncryptedNumber is
+   * safe for transmission.
+   *
+   * WARNING: This method is not intended for general use and may be
+   * removed in a future release. Think twice before using it.
+   */
+  public boolean getIsSafe() {
+    return isSafe;
+  }
 }
