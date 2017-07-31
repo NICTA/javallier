@@ -13,12 +13,9 @@
  */
 package com.n1analytics.paillier;
 
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.math.BigInteger;
-
 import com.n1analytics.paillier.util.HashChain;
+
+import java.math.BigInteger;
 
 /**
  * A class representing encrypted number. The attributes of this class are:
@@ -44,16 +41,7 @@ import com.n1analytics.paillier.util.HashChain;
  *     </li>
  * </ul>
  */
-public final class EncryptedNumber implements Serializable {
-  private static final long serialVersionUID = -3072870794406648231L;
-
-  /**
-   * Backport Java8 interface to make library build for older versions as well.
-   */
-  public interface Supplier<T> {
-    T get();
-  }
-
+public final class EncryptedNumber {
   /**
    * A serializer interface for {@code EncryptedNumber}.
    */
@@ -70,7 +58,7 @@ public final class EncryptedNumber implements Serializable {
   /**
    * The ciphertext.
    */
-  protected final  BigInteger ciphertext;
+  protected final transient BigInteger ciphertext;
 
   /**
    * The exponent of the encrypted number.
@@ -133,7 +121,7 @@ public final class EncryptedNumber implements Serializable {
   public PaillierContext getContext() {
     return context;
   }
-
+  
   /**
    * Obfuscates this number only if necessary.
    * @return a version of this encrypted number which is guaranteed to be safe.
@@ -180,7 +168,7 @@ public final class EncryptedNumber implements Serializable {
   }
 
   /**
-   * Decrypt this {@code EncryptedNumber} using a private key. See
+   * Decrypts this {@code EncryptedNumber} using a private key. See
    * {@link com.n1analytics.paillier.PaillierPrivateKey#decrypt(EncryptedNumber)} for more details.
    *
    * @param key private key to decrypt.
@@ -188,18 +176,6 @@ public final class EncryptedNumber implements Serializable {
    */
   public EncodedNumber decrypt(PaillierPrivateKey key) {
     return key.decrypt(this);
-  }
-
-  /**
-   * Decrypt this {@code EncryptedNumber} using a private key to be obtained from
-   * {@code keySupplier} first. See
-   * {@link com.n1analytics.paillier.PaillierPrivateKey#decrypt(EncryptedNumber)} for more details.
-   *
-   * @param key private key to decrypt.
-   * @return the decryption result.
-   */
-  public EncodedNumber decrypt(Supplier<PaillierPrivateKey> keySupplier) {
-    return decrypt(keySupplier.get());
   }
 
   /**
@@ -377,15 +353,15 @@ public final class EncryptedNumber implements Serializable {
   // TODO Issue #10
     /*
     public EncryptedNumber divide(EncodedNumber other) {
-      return context.divide(this, other);
+    	return context.divide(this, other);
     }
 
     public EncryptedNumber divide(Number other) {
-      return divide(context.encode(other));
+    	return divide(context.encode(other));
     }
 
     public EncryptedNumber divide(BigInteger other) {
-      return divide(context.encode(other));
+    	return divide(context.encode(other));
     }
     */
 
@@ -440,14 +416,4 @@ public final class EncryptedNumber implements Serializable {
             context.equals(o.context) &&
             ciphertext.equals(o.ciphertext));
   }
-
-  // Ensure that the serialized object is safe
-  private void writeObject(ObjectOutputStream out) throws IOException  {
-    if (this.isSafe) {
-      out.defaultWriteObject();
-    } else {
-      out.writeObject(obfuscate());
-    }
-  }
-
 }

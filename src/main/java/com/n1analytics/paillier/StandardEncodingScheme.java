@@ -1,6 +1,5 @@
 package com.n1analytics.paillier;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
@@ -9,17 +8,16 @@ import java.math.RoundingMode;
 import com.n1analytics.paillier.util.BigIntegerUtil;
 import com.n1analytics.paillier.util.HashChain;
 
-public class StandardEncodingScheme implements EncodingScheme, Serializable {
-  private static final long serialVersionUID = -5613202292457967732L;
-
+public class StandardEncodingScheme implements EncodingScheme{
+  
   //Source: http://docs.oracle.com/javase/specs/jls/se7/html/jls-4.html#jls-4.2.3
   private static final int DOUBLE_MANTISSA_BITS = 53;
-
+  
   /**
    * The result of log<sub>2</sub>base.
    */
   private final double log2Base;
-
+   
   /**
    * Denotes whether the numbers represented are signed or unsigned.
    */
@@ -57,9 +55,9 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
    * The base used to compute encoding.
    */
   private final int base;
-
+  
   private final PaillierContext context;
-
+  
   public StandardEncodingScheme(PaillierContext context, boolean signed, int precision, int base){
     this.context = context;
     this.signed = signed;
@@ -67,7 +65,7 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
       throw new IllegalArgumentException("Base must be at least equals to 2.");
     }
     this.base =base;
-    this.log2Base = Math.log(base)/ Math.log(2.0);
+    this.log2Base = Math.log((double) base)/ Math.log(2.0);
     BigInteger modulus = context.getPublicKey().getModulus();
     if(modulus.bitLength() < precision || precision < 1) {
       throw new IllegalArgumentException("Precision must be greater than zero and less than or equal to the number of bits in the modulus");
@@ -79,7 +77,7 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
     this.precision = precision;
     BigInteger encSpace = modulus.bitLength() == precision ? modulus : BigInteger.ONE.shiftLeft(precision);
     if (signed) {
-      maxEncoded = encSpace.add(BigInteger.ONE).shiftRight(1).subtract(BigInteger.ONE);
+      maxEncoded = encSpace.add(BigInteger.ONE).shiftRight(1).subtract(BigInteger.ONE);   
       minEncoded = modulus.subtract(maxEncoded);
       maxSignificand = maxEncoded;
       minSignificand = maxEncoded.negate();
@@ -90,7 +88,7 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
       minSignificand = BigInteger.ZERO;
     }
   }
-
+  
   /**
    * Encodes a {@code BigInteger} using this {@code PaillierContext}. Throws EncodeException if the input
    * value is greater than {@code maxSignificand} or is less than {@code minSignificand}.
@@ -99,7 +97,6 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
    * @return the encoding result - {@code EncodedNumber}
    * @throws EncodeException if the {@code value} is not valid.
    */
-  @Override
   public EncodedNumber encode(BigInteger value) throws EncodeException {
     if (value == null) {
       throw new EncodeException("cannot encode 'null'");
@@ -118,7 +115,7 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
       throw new EncodeException("Input value cannot be encoded.");
     }
     if(value.signum() < 0)
-      value = value.add(context.getPublicKey().getModulus());
+      value = value.add(context.getPublicKey().getModulus()); 
     return new EncodedNumber(context, value, exponent);
   }
 
@@ -131,7 +128,6 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
    * @return the encoding result.
    * @throws EncodeException if the {@code value} is not valid.
    */
-  @Override
   public EncodedNumber encode(double value) throws EncodeException {
     if(Double.isInfinite(value) || Double.isNaN(value))
       throw new EncodeException("Input value cannot be encoded.");
@@ -152,7 +148,6 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
    * @return the encoding results.
    * @throws EncodeException if the {@code value} and/or {@code maxExponent} is not valid.
    */
-  @Override
   public EncodedNumber encode(double value, int maxExponent) throws EncodeException {
     if(Double.isInfinite(value) || Double.isNaN(value))
       throw new EncodeException("Input value cannot be encoded.");
@@ -174,7 +169,6 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
    * @return the encoding results.
    * @throws EncodeException if the {@code value} and/or {@code maxExponent} is not valid.
    */
-  @Override
   public EncodedNumber encode(double value, double precision) throws EncodeException{
     if(Double.isInfinite(value) || Double.isNaN(value))
       throw new EncodeException("Input value cannot be encoded.");
@@ -196,17 +190,14 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
    * @return the encoding result.
    * @throws EncodeException if the {@code value} is not valid.
    */
-  @Override
   public EncodedNumber encode(long value) throws EncodeException {
     return encode(BigInteger.valueOf(value));
   }
-
-  @Override
+  
   public EncodedNumber encode(BigDecimal value) throws EncodeException {
     return encode(value, BIG_DECIMAL_ENCODING_PRECISION);
   }
-
-  @Override
+  
   public EncodedNumber encode(BigDecimal value, int precision) throws EncodeException {
     if (value == null) {
       throw new EncodeException("cannot encode 'null'");
@@ -249,13 +240,12 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
       }
     }
   }
-
+  
   /**
    * Checks whether this EncodingScheme supports signed numbers.
    *
    * @return true if this EncodingScheme support signed numbers, false otherwise.
    */
-  @Override
   public boolean isSigned() {
     return signed;
   }
@@ -268,7 +258,7 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
   public boolean isUnsigned() {
     return !signed;
   }
-
+  
   /**
    * Returns an exponent for a double value.
    *
@@ -278,9 +268,9 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
   private int getDoublePrecExponent(double value) {
     int binFltExponent = Math.getExponent(value) + 1;
     int binLsbExponent = binFltExponent - DOUBLE_MANTISSA_BITS;
-    return (int) Math.floor(binLsbExponent / log2Base);
+    return (int) Math.floor((double) binLsbExponent / log2Base);
   }
-
+  
   /**
    * Returns an integer ({@code BigInteger}) representation of a floating point number.
    * The integer representation is computed as <code>value * base<sup>exponent</sup></code> for non-negative
@@ -309,7 +299,7 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
 
     return bigIntRep;
   }
-
+  
   /**
    * Given an exponent derived from precision and another exponent denoting the maximum desirable exponent,
    * returns the smaller of the two.
@@ -321,7 +311,7 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
   private int getExponent(int precExponent, int maxExponent){
     return Math.min(precExponent, maxExponent);
   }
-
+  
   /**
    * Returns an exponent derived from precision. The exponent is calculated as
    * <code>floor(log<sub>base</sub>precision)</code>.
@@ -330,14 +320,13 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
    * @return exponent for this {@code precision}.
    */
   private int getPrecExponent(double precision) {
-    return (int) Math.floor(Math.log(precision) / Math.log(base));
+    return (int) Math.floor(Math.log(precision) / Math.log((double) base));
   }
-
+  
   /**
    * Returns the signum function of this EncodedNumber.
    * @return -1, 0 or 1 as the value of this EncodedNumber is negative, zero or positive.
    */
-  @Override
   public int signum(EncodedNumber number){
     if(number.value.equals(BigInteger.ZERO)){
       return 0;
@@ -345,43 +334,36 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
     if(isUnsigned()){
       return 1;
     }
-    //if this context is signed, then a negative significant is strictly greater
+    //if this context is signed, then a negative significant is strictly greater 
     //than modulus/2.
     BigInteger halfModulus = context.getPublicKey().modulus.shiftRight(1);
     return number.value.compareTo(halfModulus) > 0 ? -1 : 1;
   }
-
-  @Override
+  
   public int getBase() {
     return base;
   }
-
-  @Override
+  
   public int getPrecision() {
     return precision;
   }
-
-  @Override
+  
   public BigInteger getMaxEncoded() {
     return maxEncoded;
   }
 
-  @Override
   public BigInteger getMinEncoded() {
     return minEncoded;
   }
 
-  @Override
   public BigInteger getMaxSignificand() {
     return maxSignificand;
   }
 
-  @Override
   public BigInteger getMinSignificand() {
     return minSignificand;
   }
-
-  @Override
+  
   public boolean isValid(EncodedNumber encoded) {
     // NOTE signed == true implies minEncoded > maxEncoded
     if (!context.equals(encoded.getContext())) {
@@ -395,7 +377,7 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
     }
     return false;
   }
-
+  
   /**
    * Decodes to the exact {@code BigInteger} representation.
    *
@@ -403,7 +385,6 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
    * @return the decoding result.
    * @throws DecodeException if the {@code encoded} cannot be decoded.
    */
-  @Override
   public BigInteger decodeBigInteger(EncodedNumber encoded) throws DecodeException {
     BigInteger significand = getSignificand(encoded);
     return significand.multiply(BigInteger.valueOf(base).pow(encoded.getExponent()));
@@ -418,7 +399,6 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
    * @return the decoding result.
    * @throws DecodeException if the {@code encoded} cannot be decoded.
    */
-  @Override
   public double decodeDouble(EncodedNumber encoded) throws DecodeException {
     BigInteger significand = getSignificand(encoded);
     BigDecimal exp = BigDecimal.valueOf(base).pow(Math.abs(encoded.getExponent()));
@@ -444,7 +424,6 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
    * @return the decoding result.
    * @throws DecodeException if the {@code encoded} cannot be decoded.
    */
-  @Override
   public long decodeLong(EncodedNumber encoded) throws DecodeException {
     BigInteger decoded = decodeBigInteger(encoded);
     if(BigIntegerUtil.less(decoded, BigIntegerUtil.LONG_MIN_VALUE) ||
@@ -453,13 +432,11 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
     }
     return decoded.longValue();
   }
-
-  @Override
+  
   public BigDecimal decodeBigDecimal(EncodedNumber encoded) throws DecodeException {
     return decodeBigDecimal(encoded, BIG_DECIMAL_ENCODING_PRECISION);
   }
-
-  @Override
+  
   public BigDecimal decodeBigDecimal(EncodedNumber encoded, int precision) throws DecodeException {
     BigInteger significant = getSignificand(encoded);
     if (base == 10) {
@@ -469,7 +446,7 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
     BigDecimal exp = BigDecimal.valueOf(base).pow(encoded.getExponent(), mc);
     return exp.multiply(new BigDecimal(significant), mc);
   }
-
+  
   /**
    * Returns the value of an {@code EncodedNumber} for decoding. Throws a DecodeException if the value is
    * greater than the {@code publicKey}'s {@code modulus}. If the value is less than or equal to
@@ -500,12 +477,11 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
     }
     throw new DecodeException("Detected overflow");
   }
-
-  @Override
+  
   public BigInteger getRescalingFactor(int expDiff) {
     return (BigInteger.valueOf(base)).pow(expDiff);
   }
-
+  
   @Override
   public boolean equals(Object o) {
     if (o == this) {
@@ -516,7 +492,7 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
     }
     StandardEncodingScheme encoding = (StandardEncodingScheme) o;
     return signed == encoding.signed &&
-            precision == encoding.precision &&
+            precision == encoding.precision && 
             base == encoding.base;
   }
 
@@ -526,12 +502,12 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
             signed == o.signed &&
             precision == o.precision);
   }
-
+  
   @Override
   public int hashCode() {
     return new HashChain().chain(base).chain(signed).chain(precision).hashCode();
   }
-
+  
   //code from Maarten Bodewes (http://stackoverflow.com/questions/739532/logarithm-of-a-bigdecimal)
   private static double log2(BigInteger val)
   {
@@ -564,7 +540,7 @@ public class StandardEncodingScheme implements EncodingScheme, Serializable {
       // Magic number converts from base e to base 2 before adding. For other
       // bases, correct the result, NOT this number!
   }
-
+  
   private static final double LOG10 = Math.log(10.0);
   private static final double LOG2 = Math.log(2.0);
 

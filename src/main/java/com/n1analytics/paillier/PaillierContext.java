@@ -13,7 +13,7 @@
  */
 package com.n1analytics.paillier;
 
-import java.io.Serializable;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -22,10 +22,10 @@ import com.n1analytics.paillier.util.HashChain;
 
 /**
  * The PaillierContext combines an encoding scheme and a public key.
- *
- * The encoding scheme used to convert numbers into unsigned
+ * 
+ * The encoding scheme used to convert numbers into unsigned 
  * integers for use in the Paillier cryptosystem.
- *
+ * 
  * There are several attributes that define an encoding scheme:
  * <ul>
  *   <li>
@@ -61,8 +61,7 @@ import com.n1analytics.paillier.util.HashChain;
  * Note you can create a PaillierContext directly from the create methods
  * on a PaillierPublicKey e.g., {@link PaillierPublicKey#createSignedContext()}.
  */
-public class PaillierContext implements Serializable {
-  private static final long serialVersionUID = 2146602313301081651L;
+public class PaillierContext {
 
   /**
    * The default base value.
@@ -79,6 +78,7 @@ public class PaillierContext implements Serializable {
    */
   private final EncodingScheme encoding;
 
+  
   /**
    * Constructs a Paillier context using the  {@code DEFAULT_BASE}.
    *
@@ -89,7 +89,7 @@ public class PaillierContext implements Serializable {
   public PaillierContext(PaillierPublicKey publicKey, boolean signed, int precision) {
     this(publicKey, signed, precision, DEFAULT_BASE);
   }
-
+  
   /**
    * Constructs a Paillier context
    *
@@ -108,8 +108,8 @@ public class PaillierContext implements Serializable {
     this.publicKey = publicKey;
     this.encoding = new StandardEncodingScheme(this, signed, precision, base);
   }
-
-
+  
+  
   public PaillierContext(PaillierPublicKey publicKey, EncodingScheme encoding) {
     if (publicKey == null) {
       throw new NullPointerException("publicKey must not be null");
@@ -124,7 +124,7 @@ public class PaillierContext implements Serializable {
   public PaillierPublicKey getPublicKey() {
     return publicKey;
   }
-
+  
   /**
    * @return the encoding scheme of this PaillierContext
    */
@@ -143,7 +143,7 @@ public class PaillierContext implements Serializable {
    * @return true if this PaillierContext support signed numbers, false otherwise.
    */
   public boolean isSigned() {
-
+    
     return encoding.isSigned();
   }
 
@@ -256,11 +256,11 @@ public class PaillierContext implements Serializable {
 
   /**
    * Checks whether an {@code EncodedNumber}'s {@code value} is valid, that is the {@code value}
-   * can be encrypted using the associated {@code publicKey}.
-   *
-   * For an unsigned {@code PaillierContext}, a valid {@code value} is less than or equal
-   * to {@code maxEncoded}. While for a signed {@code PaillierContext}, a valid {@code value}
-   * is less than or equal to {@code maxEncoded} (for positive numbers) or is greater than or
+   * can be encrypted using the associated {@code publicKey}. 
+   * 
+   * For an unsigned {@code PaillierContext}, a valid {@code value} is less than or equal 
+   * to {@code maxEncoded}. While for a signed {@code PaillierContext}, a valid {@code value} 
+   * is less than or equal to {@code maxEncoded} (for positive numbers) or is greater than or 
    * equal to {@code minEncoded} (for negative numbers).
    *
    * @param encoded the {@code EncodedNumber} to be checked.
@@ -331,7 +331,7 @@ public class PaillierContext implements Serializable {
   public EncodedNumber encode(long value) throws EncodeException {
     return encode(BigInteger.valueOf(value));
   }
-
+  
   public EncodedNumber encode(BigDecimal value) throws EncodeException {
     return encoding.encode(value);
   }
@@ -344,7 +344,7 @@ public class PaillierContext implements Serializable {
     return encoding.signum(number);
   }
 
-
+  
 
   /**
    * Returns the rescaling factor to re-encode an {@code EncodedNumber} using the same {@code base}
@@ -436,7 +436,7 @@ public class PaillierContext implements Serializable {
   public long decodeLong(EncodedNumber encoded) throws DecodeException {
     return encoding.decodeLong(encoded);
   }
-
+  
   public BigDecimal decodeBigDecimal(EncodedNumber encoded) throws DecodeException {
     return encoding.decodeBigDecimal(encoded);
   }
@@ -449,7 +449,7 @@ public class PaillierContext implements Serializable {
    */
   public EncryptedNumber obfuscate(EncryptedNumber encrypted) {
     checkSameContext(encrypted);
-
+    
     final BigInteger obfuscated = publicKey.raw_obfuscate(encrypted.ciphertext);
     return new EncryptedNumber(this, obfuscated, encrypted.getExponent(), true);
   }
@@ -544,10 +544,10 @@ public class PaillierContext implements Serializable {
           throws PaillierContextMismatchException {
     checkSameContext(operand1);
     checkSameContext(operand2);
-    //addition only works if both numbers have the same exponent. Adjusting the exponent of an
+    //addition only works if both numbers have the same exponent. Adjusting the exponent of an 
     //encrypted number can only be done with an encrypted multiplication (internally, this is
-    //done with a modular exponentiation).
-    //It is going to be computationally much cheaper to adjust the encoded number before the
+    //done with a modular exponentiation). 
+    //It is going to be computationally much cheaper to adjust the encoded number before the 
     //encryption as we only need to do a modular multiplication.
     int exponent1 = operand1.getExponent();
     int exponent2 = operand2.getExponent();
@@ -768,9 +768,9 @@ public class PaillierContext implements Serializable {
     final int exponent = operand1.getExponent() + operand2.getExponent();
     return new EncodedNumber(this, result, exponent);
   }
-
+  
   /**
-   * returns a random {@code EncodedNumber}, consisting of a significant, chosen uniformly
+   * returns a random {@code EncodedNumber}, consisting of a significant, chosen uniformly 
    * at random out of the message space and an exponent specified in parameter (@code exponent}.
    * @param exponent
    * @return a random EncodedNumber

@@ -5,14 +5,17 @@ import java.util.logging.Logger;
 
 /**
  * This is a mock version of the PaillierContext.
- *
+ * 
  * !!! THIS IS FOR DEBUGGING PURPOSES ONLY !!!
- *
+ * 
  * It emulates the arithmetic of the PaillierContext without the expensive encryption operations.
  * Thus, no values get actually encrypted. Everything is in the clear!
+ * 
+ * @author whenecka
+ *
  */
 public class MockPaillierContext extends PaillierContext {
-  private static final long serialVersionUID = 780795138609219252L;
+
   private static Logger logger = Logger.getLogger("com.n1analytics.paillier");
 
   /**
@@ -26,7 +29,7 @@ public class MockPaillierContext extends PaillierContext {
     super(publicKey, signed, precision);
     logger.warning("You are using the MockPaillierContext. Are you sure? This is NOT secure/private!");
   }
-
+  
   public MockPaillierContext(PaillierPublicKey publicKey, boolean signed, int precision, int base) {
     super(publicKey, signed, precision, base);
     logger.warning("You are using the MockPaillierContext. Are you sure? This is NOT secure/private!");
@@ -39,7 +42,6 @@ public class MockPaillierContext extends PaillierContext {
    * @param encrypted the {@code EncryptedNumber} to be obfuscated.
    * @return the "mock" obfuscation result.
    */
-  @Override
   public EncryptedNumber obfuscate(EncryptedNumber encrypted) {
     //we skip this
     return encrypted;
@@ -51,9 +53,8 @@ public class MockPaillierContext extends PaillierContext {
    * @param encoded the {@code EncodedNumber} to be encrypted.
    * @return the "mock" encryption result.
    */
-  @Override
   public EncryptedNumber encrypt(EncodedNumber encoded) {
-    //we don't actually encrypt.
+    //we don't actually encrypt. 
     checkSameContext(encoded);
     final BigInteger modulus = getPublicKey().getModulus();
     final BigInteger value = encoded.getValue();
@@ -69,7 +70,6 @@ public class MockPaillierContext extends PaillierContext {
    * @throws PaillierContextMismatchException if {@code operand1}'s mock context is not the same as
    * {@code operand2}'s mock context.
    */
-  @Override
   public EncryptedNumber add(EncryptedNumber operand1, EncryptedNumber operand2)
       throws PaillierContextMismatchException {
     checkSameContext(operand1);
@@ -104,7 +104,6 @@ public class MockPaillierContext extends PaillierContext {
    * @return the "mock" additive inverse.
    * @throws PaillierContextMismatchException if {@code operand1}'s mock context is not the same as this mock context.
    */
-  @Override
   public EncryptedNumber additiveInverse(EncryptedNumber operand1) throws PaillierContextMismatchException {
     checkSameContext(operand1);
     return new EncryptedNumber(operand1.getContext(),
@@ -119,7 +118,6 @@ public class MockPaillierContext extends PaillierContext {
    * @return the "mock" additive inverse.
    * @throws PaillierContextMismatchException if {@code operand1}'s mock context is not the same as this mock context.
    */
-  @Override
   public EncodedNumber additiveInverse(EncodedNumber operand1) throws PaillierContextMismatchException {
     checkSameContext(operand1);
     if (operand1.getValue().signum() == 0) {
@@ -140,7 +138,6 @@ public class MockPaillierContext extends PaillierContext {
    * @throws PaillierContextMismatchException if {@code operand1}'s mock context is not the same as
    * {@code operand2}'s mock context.
    */
-  @Override
   public EncryptedNumber multiply(EncryptedNumber operand1, EncodedNumber operand2)
       throws PaillierContextMismatchException {
     checkSameContext(operand1);
@@ -148,7 +145,7 @@ public class MockPaillierContext extends PaillierContext {
     final BigInteger value1 = operand1.ciphertext;
     final BigInteger value2 = operand2.getValue();
     final BigInteger result = value1.multiply(value2);
-
+    
     //this tests for overflows
     BigInteger posValue1 = (isSigned() && value1.compareTo(getMinEncoded())>=0)? value1.subtract(this.getPublicKey().modulus) : value1;
     BigInteger posValue2 = (isSigned() && value2.compareTo(getMinEncoded())>=0)? value2.subtract(this.getPublicKey().modulus) : value2;
@@ -158,7 +155,7 @@ public class MockPaillierContext extends PaillierContext {
     final int exponent = operand1.getExponent() + operand2.getExponent();
     return new EncryptedNumber(this, result.mod(getPublicKey().getModulus()), exponent);
   }
-
+  
   @Override
   public boolean equals(Object o) {
     if (o == this) {
