@@ -21,6 +21,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.*;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1150,6 +1151,43 @@ public class PaillierEncryptedNumberTest {
         assertNotEquals(unSafeEN.ciphertext, safeEN.ciphertext);
         assertTrue(safeEN.getSafeEncryptedNumber().isSafe);
         assertEquals(safeEN.ciphertext, safeEN.getSafeEncryptedNumber().ciphertext);
+    }
+
+    @Test
+    public void testJavaSerialization () throws IOException, ClassNotFoundException {
+      EncryptedNumber unSafeEN = context.encrypt(context.encode(1.01, 1e-8));
+      assertFalse(unSafeEN.isSafe);
+      EncryptedNumber safeEN = unSafeEN.getSafeEncryptedNumber();
+      assertTrue(safeEN.isSafe);
+      assertNotEquals(unSafeEN.ciphertext, safeEN.ciphertext);
+
+      //test writing and reading safe en
+      String file = "./temp";
+      FileOutputStream fos = new FileOutputStream(file);
+      ObjectOutputStream oos = new ObjectOutputStream(fos);
+      oos.writeObject(safeEN);
+      oos.flush();
+      oos.close();
+
+      FileInputStream fis = new FileInputStream(file);
+      ObjectInputStream ois = new ObjectInputStream(fis);
+      EncryptedNumber safeEnRead = (EncryptedNumber) ois.readObject();
+      ois.close();
+      assertEquals(safeEN, safeEnRead);
+
+      //test writing and reading unsafe en
+      String file2 = "./temp2";
+      FileOutputStream fos2 = new FileOutputStream(file2);
+      ObjectOutputStream oos2 = new ObjectOutputStream(fos2);
+      oos2.writeObject(unSafeEN);
+      oos2.flush();
+      oos2.close();
+
+      FileInputStream fis2 = new FileInputStream(file2);
+      ObjectInputStream ois2 = new ObjectInputStream(fis2);
+      EncryptedNumber unsafeEnRead = (EncryptedNumber) ois2.readObject();
+      ois2.close();
+      assertNotEquals(unSafeEN, unsafeEnRead); // not equal because unsafeEnRead has been obfuscated.
     }
   }
 

@@ -14,6 +14,7 @@
 package com.n1analytics.paillier;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.math.BigInteger;
@@ -444,10 +445,22 @@ public final class EncryptedNumber implements Serializable {
   // Ensure that the serialized object is safe
   private void writeObject(ObjectOutputStream out) throws IOException  {
     if (this.isSafe) {
+      out.writeInt(0);
       out.defaultWriteObject();
     } else {
+      out.writeInt(1);
       out.writeObject(obfuscate());
     }
   }
+
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    int isSafe = in.readInt();
+    if(isSafe == 0){
+      in.defaultReadObject();
+    } else {
+      in.readObject();
+    }
+  }
+
 
 }
