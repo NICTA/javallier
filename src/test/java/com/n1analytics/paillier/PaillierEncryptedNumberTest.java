@@ -1187,7 +1187,10 @@ public class PaillierEncryptedNumberTest {
       ObjectInputStream ois2 = new ObjectInputStream(fis2);
       EncryptedNumber unsafeEnRead = (EncryptedNumber) ois2.readObject();
       ois2.close();
-      assertNotEquals(unSafeEN, unsafeEnRead); // not equal because unsafeEnRead has been obfuscated.
+      assertEquals(unSafeEN.context, unsafeEnRead.context);
+      assertEquals(unSafeEN.exponent, unsafeEnRead.exponent);
+      assertTrue(unsafeEnRead.ciphertext != null);
+      assertNotEquals(unSafeEN.ciphertext, unsafeEnRead.ciphertext); // not equal because unsafeEnRead has been obfuscated.
     }
   }
 
