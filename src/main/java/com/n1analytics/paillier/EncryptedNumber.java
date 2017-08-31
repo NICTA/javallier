@@ -480,6 +480,10 @@ public final class EncryptedNumber implements Serializable {
       ciphertextF.set(this, _ciphertext);
       exponentF.set(this, _exponent);
       isSafeF.set(this, _isSafe);
+      contextF.setAccessible(false);
+      ciphertextF.setAccessible(false);
+      exponentF.setAccessible(false);
+      isSafeF.setAccessible(false);
     }
   }
 

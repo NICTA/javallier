@@ -1162,7 +1162,7 @@ public class PaillierEncryptedNumberTest {
       assertNotEquals(unSafeEN.ciphertext, safeEN.ciphertext);
 
       //test writing and reading safe en
-      String file = "./temp";
+      File file = File.createTempFile("temp", ".tmp");
       FileOutputStream fos = new FileOutputStream(file);
       ObjectOutputStream oos = new ObjectOutputStream(fos);
       oos.writeObject(safeEN);
@@ -1173,10 +1173,11 @@ public class PaillierEncryptedNumberTest {
       ObjectInputStream ois = new ObjectInputStream(fis);
       EncryptedNumber safeEnRead = (EncryptedNumber) ois.readObject();
       ois.close();
+      file.deleteOnExit();
       assertEquals(safeEN, safeEnRead);
 
       //test writing and reading unsafe en
-      String file2 = "./temp2";
+      File file2 = File.createTempFile("temp", ".tmp");
       FileOutputStream fos2 = new FileOutputStream(file2);
       ObjectOutputStream oos2 = new ObjectOutputStream(fos2);
       oos2.writeObject(unSafeEN);
@@ -1187,8 +1188,10 @@ public class PaillierEncryptedNumberTest {
       ObjectInputStream ois2 = new ObjectInputStream(fis2);
       EncryptedNumber unsafeEnRead = (EncryptedNumber) ois2.readObject();
       ois2.close();
+      file2.deleteOnExit();
       assertEquals(unSafeEN.context, unsafeEnRead.context);
       assertEquals(unSafeEN.exponent, unsafeEnRead.exponent);
+      assertTrue(unsafeEnRead.isSafe);
       assertTrue(unsafeEnRead.ciphertext != null);
       assertNotEquals(unSafeEN.ciphertext, unsafeEnRead.ciphertext); // not equal because unsafeEnRead has been obfuscated.
     }
