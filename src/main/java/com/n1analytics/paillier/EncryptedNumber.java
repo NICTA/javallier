@@ -14,7 +14,7 @@
 package com.n1analytics.paillier;
 
 import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.math.BigInteger;
 
@@ -195,7 +195,7 @@ public final class EncryptedNumber implements Serializable {
    * {@code keySupplier} first. See
    * {@link com.n1analytics.paillier.PaillierPrivateKey#decrypt(EncryptedNumber)} for more details.
    *
-   * @param key private key to decrypt.
+   * @param keySupplier private key to decrypt.
    * @return the decryption result.
    */
   public EncodedNumber decrypt(Supplier<PaillierPrivateKey> keySupplier) {
@@ -441,13 +441,7 @@ public final class EncryptedNumber implements Serializable {
             ciphertext.equals(o.ciphertext));
   }
 
-  // Ensure that the serialized object is safe
-  private void writeObject(ObjectOutputStream out) throws IOException  {
-    if (this.isSafe) {
-      out.defaultWriteObject();
-    } else {
-      out.writeObject(obfuscate());
-    }
+  private Object writeReplace() throws ObjectStreamException {
+    return isSafe ? this : obfuscate();
   }
-
 }
