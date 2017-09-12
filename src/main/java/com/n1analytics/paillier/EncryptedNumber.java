@@ -14,10 +14,8 @@
 package com.n1analytics.paillier;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.ObjectStreamException;
 import java.io.Serializable;
-import java.lang.reflect.Field;
 import java.math.BigInteger;
 
 import com.n1analytics.paillier.util.HashChain;
@@ -443,49 +441,7 @@ public final class EncryptedNumber implements Serializable {
             ciphertext.equals(o.ciphertext));
   }
 
-  // Ensure that the serialized object is safe
-  private void writeObject(ObjectOutputStream out) throws IOException  {
-    if (this.isSafe) {
-      out.writeByte(1);
-      out.defaultWriteObject();
-    } else {
-      out.writeByte(0);
-      EncryptedNumber en = obfuscate();
-      out.writeObject(en.context);
-      out.writeObject(en.ciphertext);
-      out.writeInt(en.exponent);
-      out.writeBoolean(en.isSafe);
-    }
+  private Object writeReplace() throws ObjectStreamException {
+    return isSafe ? this : obfuscate();
   }
-
-  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
-    byte isSafe = in.readByte();
-    if(isSafe == 1){
-      in.defaultReadObject();
-    } else {
-      Class c = EncryptedNumber.class;
-      Field contextF = c.getDeclaredField("context");
-      Field ciphertextF = c.getDeclaredField("ciphertext");
-      Field exponentF = c.getDeclaredField("exponent");
-      Field isSafeF = c.getDeclaredField("isSafe");
-      contextF.setAccessible(true);
-      ciphertextF.setAccessible(true);
-      exponentF.setAccessible(true);
-      isSafeF.setAccessible(true);
-      PaillierContext _context = (PaillierContext) in.readObject();
-      BigInteger _ciphertext = (BigInteger) in.readObject();
-      int _exponent = in.readInt();
-      boolean _isSafe = in.readBoolean();
-      contextF.set(this, _context);
-      ciphertextF.set(this, _ciphertext);
-      exponentF.set(this, _exponent);
-      isSafeF.set(this, _isSafe);
-      contextF.setAccessible(false);
-      ciphertextF.setAccessible(false);
-      exponentF.setAccessible(false);
-      isSafeF.setAccessible(false);
-    }
-  }
-
-
 }
