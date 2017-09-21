@@ -568,7 +568,7 @@ public class PaillierEncodedNumberTest {
     @Test
     public void testEncodedDecreaseExponentTo0() throws Exception {
       EncodedNumber number1 = context.encode(1.01, Math.pow(1.0, -8));
-      assert -30 < number1.getExponent();
+      assertTrue(-30 < number1.getExponent());
       EncodedNumber number2 = number1.decreaseExponentTo(-30);
 
       if(number1.getExponent() < -30){
@@ -583,7 +583,7 @@ public class PaillierEncodedNumberTest {
     public void testEncodedDecreaseExponentTo1() throws Exception {
       if(conf.signed()) {
         EncodedNumber number1 = context.encode(-1.01, Math.pow(1.0, -8));
-        assert -30 < number1.getExponent();
+        assertTrue(-30 < number1.getExponent());
         EncodedNumber number2 = number1.decreaseExponentTo(-30);
 
         if(number1.getExponent() < -30){
@@ -702,7 +702,7 @@ public class PaillierEncodedNumberTest {
     @Test
     public void testEncodedDecreaseInvalidExponent() throws Exception {
       EncodedNumber enc1 = defaultSignedContext.encode(3.14);
-      assert enc1.getExponent() < -10;
+      assertTrue(enc1.getExponent() < -10);
 
       try {
         enc1.decreaseExponentTo(-10);
@@ -810,7 +810,7 @@ public class PaillierEncodedNumberTest {
 
         double realEps = eps * Math.pow(2.0, (i - 1));
         double val = Math.pow(2.0, i) - realEps;
-        assert val != Math.pow(2.0, i);
+        assertTrue(val != Math.pow(2.0, i));
 
         EncodedNumber enc3 = defaultSignedContext.encode(val);
         EncodedNumber enc4 = defaultSignedContext.encode(val, realEps);

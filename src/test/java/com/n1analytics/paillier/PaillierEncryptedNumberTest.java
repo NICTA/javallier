@@ -66,7 +66,7 @@ public class PaillierEncryptedNumberTest {
     public void testAutomaticPrecision0() throws Exception {
       double eps = Math.ulp(1.0d);
       double onePlusEps = 1.0d + eps;
-      assert onePlusEps > 1;
+      assertTrue(onePlusEps > 1);
 
       EncryptedNumber ciphertext1 = context.encrypt(onePlusEps);
       double decryption1 = privateKey.decrypt(ciphertext1).decodeDouble();
@@ -756,26 +756,22 @@ public class PaillierEncryptedNumberTest {
 
     @Test
     public void testAddWithEncryptedIntAndEncodedNumberDiffExp0() throws Exception {
-      EncryptedNumber ciphertext1 = context.encrypt(15);
-      EncodedNumber encoded2 = context.encode(1.0, 50);
-      assert encoded2.getExponent() > 200;
-      assert ciphertext1.getExponent() > 200;
+      EncryptedNumber ciphertext1 = context.encrypt(1);
+      EncodedNumber encoded1 = context.encode(0.05);
+      assertTrue(ciphertext1.getExponent() > encoded1.getExponent());
 
-      EncodedNumber encoded3 = context.encode(1.0, 200);
-      EncryptedNumber ciphertext3 = ciphertext1.add(encoded3);
-      double decryption = privateKey.decrypt(ciphertext3).decodeDouble();
-      assertEquals(16, (long) decryption);
+      EncryptedNumber ciphertext2 = ciphertext1.add(encoded1);
+      assertEquals(1.05, privateKey.decrypt(ciphertext2).decodeDouble(), EPSILON);
     }
 
     @Test
     public void testAddWithEncryptedIntAndEncodedNumberDiffExp1() throws Exception {
-      EncodedNumber encoded1 = context.encode(1.0, 10);
-      EncryptedNumber ciphertext1 = context.encrypt(context.encode(15.0, 100));
-      assert encoded1.getExponent() == 10;
-      assert ciphertext1.getExponent() == 100;
+      EncryptedNumber ciphertext1 = context.encrypt(0.05);
+      EncodedNumber encoded1 = context.encode(1);
+      assertTrue(ciphertext1.getExponent() < encoded1.getExponent());
 
       EncryptedNumber ciphertext2 = ciphertext1.add(encoded1);
-      assertEquals(16.0, privateKey.decrypt(ciphertext2).decodeDouble(), EPSILON);
+      assertEquals(1.05, privateKey.decrypt(ciphertext2).decodeDouble(), EPSILON);
     }
 
     @Test
@@ -800,10 +796,10 @@ public class PaillierEncryptedNumberTest {
     @Test
     public void testDecreaseExponentTo() throws Exception {
       EncryptedNumber ciphertext1 = context.encrypt(context.encode(1.01, Math.pow(1.0, -8)));
-      assert -30 < ciphertext1.getExponent();
+      assertTrue(-30 < ciphertext1.getExponent());
       EncryptedNumber ciphertext2 = ciphertext1.decreaseExponentTo(-30);
 
-      assert -30 < ciphertext1.getExponent();
+      assertTrue(-30 < ciphertext1.getExponent());
       assertEquals(-30, ciphertext2.getExponent());
       assertEquals(1.01, privateKey.decrypt(ciphertext2).decodeDouble(), Math.pow(1.0, -8));
     }
@@ -1135,7 +1131,7 @@ public class PaillierEncryptedNumberTest {
     @Test
     public void testDecreaseInvalidExponent() throws Exception {
       EncryptedNumber ciphertext = context.encrypt(context.encode(1.01, 1e-8));
-      assert ciphertext.getExponent() < 20;
+      assertTrue(ciphertext.getExponent() < 20);
 
       exception.expect(IllegalArgumentException.class);
       ciphertext.decreaseExponentTo(20);
