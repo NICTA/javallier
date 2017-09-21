@@ -79,6 +79,8 @@ testOptions in Test += Tests.Setup(classLoader =>
     .loadClass("org.slf4j.LoggerFactory")
     .getMethod("getLogger", classLoader.loadClass("java.lang.String"))
     .invoke(null, "ROOT"))
+// Turn on verbose outputs for jUnit tests to get around the 10 min Travis timeout
+testOptions += Tests.Argument(TestFrameworks.JUnit, "-v")
 
 jacoco.settings
 
